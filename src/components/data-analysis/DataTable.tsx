@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowUp, ArrowDown, Search, Download, FileText, Filter, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ArrowUp, ArrowDown, Search, Download, FileText, Filter, ChevronDown, X, SlidersHorizontal, Eye, EyeOff, ChevronsUpDown } from 'lucide-react';
 
 interface DataTableProps {
   data: any[];
@@ -13,23 +13,59 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedColumns, setSelectedColumns] = useState<string[]>(headers);
   const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({});
+  const [showFilterMenu, setShowFilterMenu] = useState<string | null>(null);
   
   // When headers change, update selectedColumns
   useEffect(() => {
     setSelectedColumns(headers);
   }, [headers]);
   
-  // Filter data based on search term
-  const filteredData = data.filter(row => {
-    return headers.some(header => {
-      const value = row[header];
-      if (value === null || value === undefined) return false;
-      return String(value).toLowerCase().includes(searchTerm.toLowerCase());
+  // Get unique values for each column for filtering
+  const uniqueValues = useMemo(() => {
+    const values: Record<string, Set<string>> = {};
+    
+    headers.forEach(header => {
+      const columnValues = new Set<string>();
+      
+      data.forEach(row => {
+        if (row[header] !== null && row[header] !== undefined && row[header] !== '') {
+          columnValues.add(String(row[header]));
+        }
+      });
+      
+      values[header] = columnValues;
     });
-  });
+    
+    return values;
+  }, [data, headers]);
+  
+  // Filter data based on search term and column filters
+  const filteredData = useMemo(() => {
+    return data.filter(row => {
+      // Search filter
+      const matchesSearch = searchTerm === '' || headers.some(header => {
+        const value = row[header];
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(searchTerm.toLowerCase());
+      });
+      
+      // Column filters
+      const matchesFilters = Object.keys(activeFilters).every(header => {
+        if (!activeFilters[header].length) return true;
+        
+        const value = row[header];
+        if (value === null || value === undefined) return false;
+        
+        return activeFilters[header].includes(String(value));
+      });
+      
+      return matchesSearch && matchesFilters;
+    });
+  }, [data, headers, searchTerm, activeFilters]);
   
   // Sort data based on sort config
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     const dataToSort = [...filteredData];
     if (sortConfig !== null) {
       dataToSort.sort((a, b) => {
@@ -47,14 +83,19 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
           return sortConfig.direction === 'ascending' ? aNum - bNum : bNum - aNum;
         }
         
+        // Check if values are dates
+        const aDate = new Date(aValue);
+        const bDate = new Date(bValue);
+        if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+          return sortConfig.direction === 'ascending' 
+            ? aDate.getTime() - bDate.getTime() 
+            : bDate.getTime() - aDate.getTime();
+        }
+        
         // Default string comparison
-        if (aValue < bValue) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
-        return 0;
+        return sortConfig.direction === 'ascending' 
+          ? String(aValue).localeCompare(String(bValue))
+          : String(bValue).localeCompare(String(aValue));
       });
     }
     return dataToSort;
@@ -83,7 +124,13 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
     
     const csvContent = [
       selectedColumns.join(','),
-      ...selectedData.map(row => selectedColumns.map(header => `"${row[header] || ''}"`).join(','))
+      ...selectedData.map(row => selectedColumns.map(header => {
+        const value = row[header];
+        if (value === null || value === undefined) return '""';
+        return typeof value === 'string' && value.includes(',') 
+          ? `"${value.replace(/"/g, '""')}"` 
+          : `"${value}"`;
+      }).join(','))
     ].join('\n');
     
     // Create a Blob and generate a download link
@@ -106,6 +153,30 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
     } else {
       setSelectedColumns([...selectedColumns, header]);
     }
+  };
+
+  const handleFilterChange = (header: string, value: string, checked: boolean) => {
+    setActiveFilters(prev => {
+      const current = prev[header] || [];
+      
+      if (checked) {
+        return { ...prev, [header]: [...current, value] };
+      } else {
+        return { ...prev, [header]: current.filter(v => v !== value) };
+      }
+    });
+  };
+  
+  const clearFilters = () => {
+    setActiveFilters({});
+  };
+  
+  const clearFilter = (header: string) => {
+    setActiveFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[header];
+      return newFilters;
+    });
   };
   
   // Format cell value for display
@@ -133,117 +204,297 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
     return String(value);
   };
   
+  // Check if there are any active filters
+  const hasActiveFilters = Object.values(activeFilters).some(filters => filters.length > 0);
+  
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative w-full sm:w-64">
-          <input
-            type="text"
-            placeholder="Search data..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1); // Reset to first page on search
-            }}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
-        </div>
-        
-        <div className="flex space-x-2 w-full sm:w-auto">
-          <div className="relative">
-            <button 
-              onClick={() => setShowColumnSelector(!showColumnSelector)}
-              className="flex items-center py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-            >
-              <Filter size={18} className="mr-2" />
-              Columns
-              <ChevronDown size={16} className="ml-2" />
-            </button>
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+      {/* Header with search and actions */}
+      <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="relative w-full sm:w-80">
+            <input
+              type="text"
+              placeholder="Search data..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page on search
+              }}
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            />
+            <Search className="absolute left-3 top-3 text-gray-400" size={18} />
             
-            {showColumnSelector && (
-              <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-64 p-3">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Select columns to display</h4>
-                <div className="max-h-48 overflow-y-auto">
-                  {headers.map(header => (
-                    <div key={header} className="flex items-center py-1">
-                      <input
-                        type="checkbox"
-                        id={`col-${header}`}
-                        checked={selectedColumns.includes(header)}
-                        onChange={() => toggleColumnSelection(header)}
-                        className="mr-2 rounded"
-                      />
-                      <label htmlFor={`col-${header}`} className="text-sm text-gray-700 cursor-pointer">
-                        {header}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
             )}
           </div>
           
-          <button 
-            onClick={handleDownloadCSV}
-            className="flex items-center py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-          >
-            <Download size={18} className="mr-2" />
-            Export
-          </button>
+          <div className="flex space-x-3 w-full sm:w-auto">
+            <div className="relative">
+              <button 
+                onClick={() => setShowColumnSelector(!showColumnSelector)}
+                className="flex items-center py-2 px-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                <Eye size={16} className="mr-1.5" />
+                <span className="mr-1">Columns</span>
+                <ChevronDown size={14} />
+              </button>
+              
+              {showColumnSelector && (
+                <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-20 w-64 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-gray-700">Visible columns</h4>
+                    <button 
+                      onClick={() => setSelectedColumns(headers)}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Reset all
+                    </button>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto pr-1">
+                    {headers.map(header => (
+                      <div key={header} className="flex items-center py-1.5 px-1 hover:bg-gray-50 rounded">
+                        <input
+                          type="checkbox"
+                          id={`col-${header}`}
+                          checked={selectedColumns.includes(header)}
+                          onChange={() => toggleColumnSelection(header)}
+                          className="mr-2 rounded text-blue-600 focus:ring-blue-500"
+                        />
+                        <label htmlFor={`col-${header}`} className="text-sm text-gray-700 cursor-pointer truncate flex-1">
+                          {header}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="relative">
+              <button 
+                onClick={() => setShowFilterMenu(showFilterMenu ? null : 'main')}
+                className={`flex items-center py-2 px-3 border hover:bg-gray-50 text-gray-700 rounded-lg font-medium transition-colors shadow-sm ${
+                  hasActiveFilters ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-white border-gray-300'
+                }`}
+              >
+                <Filter size={16} className="mr-1.5" />
+                <span className="mr-1">Filter</span>
+                {hasActiveFilters && (
+                  <span className="bg-blue-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs mr-1">
+                    {Object.values(activeFilters).flat().length}
+                  </span>
+                )}
+                <ChevronDown size={14} />
+              </button>
+              
+              {showFilterMenu === 'main' && (
+                <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-20 w-72 p-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-gray-700">Filter data</h4>
+                    {hasActiveFilters && (
+                      <button 
+                        onClick={clearFilters}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Clear all filters
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Active filter tags */}
+                  {hasActiveFilters && (
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                      {Object.entries(activeFilters).map(([header, values]) => 
+                        values.length > 0 && (
+                          <div key={header} className="inline-flex items-center bg-blue-50 border border-blue-200 text-blue-700 rounded-full px-2 py-1 text-xs">
+                            <span className="font-medium mr-1">{header}:</span>
+                            <span>{values.length > 1 ? `${values.length} values` : values[0]}</span>
+                            <button 
+                              onClick={() => clearFilter(header)} 
+                              className="ml-1 text-blue-500 hover:text-blue-700"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+                    {headers.map(header => {
+                      // Only show columns that have a reasonable number of unique values
+                      const values = Array.from(uniqueValues[header] || []);
+                      return values.length > 0 && values.length <= 30 ? (
+                        <div key={header} className="border border-gray-200 rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => setShowFilterMenu(showFilterMenu === header ? 'main' : header)}
+                            className="flex items-center justify-between w-full px-3 py-2 text-left text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100"
+                          >
+                            <span className="truncate max-w-[200px]">{header}</span>
+                            <ChevronDown size={14} className={`transform transition-transform ${showFilterMenu === header ? 'rotate-180' : ''}`} />
+                          </button>
+                          
+                          {showFilterMenu === header && (
+                            <div className="p-2 max-h-32 overflow-y-auto bg-white">
+                              {Array.from(uniqueValues[header] || []).sort().map(value => (
+                                <div key={value} className="flex items-center py-1 px-1">
+                                  <input
+                                    type="checkbox"
+                                    id={`filter-${header}-${value}`}
+                                    checked={(activeFilters[header] || []).includes(value)}
+                                    onChange={(e) => handleFilterChange(header, value, e.target.checked)}
+                                    className="mr-2 rounded text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <label htmlFor={`filter-${header}-${value}`} className="text-sm text-gray-700 cursor-pointer truncate">
+                                    {value === '' ? '(Empty)' : value}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <button 
+              onClick={handleDownloadCSV}
+              className="flex items-center py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors shadow-sm"
+            >
+              <Download size={16} className="mr-1.5" />
+              Export
+            </button>
+          </div>
         </div>
+        
+        {/* Active filters summary */}
+        {hasActiveFilters && (
+          <div className="mt-3 pt-3 border-t border-gray-200 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-gray-500">Active filters:</span>
+            {Object.entries(activeFilters).map(([header, values]) => 
+              values.length > 0 && (
+                <div key={header} className="inline-flex items-center bg-blue-50 border border-blue-200 text-blue-700 rounded-full px-2 py-0.5 text-xs">
+                  <span className="font-medium mr-1">{header}:</span>
+                  <span>{values.length > 1 ? `${values.length} values` : values[0]}</span>
+                  <button 
+                    onClick={() => clearFilter(header)} 
+                    className="ml-1 text-blue-500 hover:text-blue-700"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              )
+            )}
+            <button 
+              onClick={clearFilters}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
       </div>
       
       <div className="overflow-x-auto">
         {paginatedData.length > 0 ? (
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                {selectedColumns.map((header, index) => (
-                  <th 
-                    key={index} 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort(header)}
-                  >
-                    <div className="flex items-center space-x-1">
-                      <span>{header}</span>
-                      {sortConfig?.key === header ? (
-                        sortConfig.direction === 'ascending' ? (
-                          <ArrowUp size={14} />
+              <tr className="bg-gray-50 border-y border-gray-200">
+                {selectedColumns.map((header, index) => {
+                  const isFiltered = activeFilters[header]?.length > 0;
+                  
+                  return (
+                    <th 
+                      key={index} 
+                      className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-100 ${
+                        isFiltered ? 'text-blue-600' : 'text-gray-500'
+                      }`}
+                      onClick={() => handleSort(header)}
+                    >
+                      <div className="flex items-center">
+                        <span className="inline-block max-w-[150px] truncate" title={header}>
+                          {header}
+                        </span>
+                        {sortConfig?.key === header ? (
+                          sortConfig.direction === 'ascending' ? (
+                            <ArrowUp size={14} className="ml-1" />
+                          ) : (
+                            <ArrowDown size={14} className="ml-1" />
+                          )
                         ) : (
-                          <ArrowDown size={14} />
-                        )
-                      ) : null}
-                    </div>
-                  </th>
-                ))}
+                          <ChevronsUpDown size={14} className="ml-1 text-gray-300" />
+                        )}
+                        
+                        {isFiltered && (
+                          <span className="ml-1.5 text-blue-600">
+                            <Filter size={12} />
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {paginatedData.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-gray-50">
-                  {selectedColumns.map((header, colIndex) => (
-                    <td key={colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {formatCellValue(row[header])}
-                    </td>
-                  ))}
+                <tr key={rowIndex} className="hover:bg-gray-50 transition-colors">
+                  {selectedColumns.map((header, colIndex) => {
+                    const value = row[header];
+                    const formattedValue = formatCellValue(value);
+                    
+                    // Determine if this is a numeric cell for text alignment
+                    const isNumeric = typeof value === 'number' || (typeof value === 'string' && !isNaN(Number(value)));
+                    
+                    return (
+                      <td 
+                        key={colIndex} 
+                        className={`px-6 py-3 text-sm ${isNumeric ? 'text-right' : 'text-left'} ${
+                          activeFilters[header]?.includes(String(value)) 
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {formattedValue}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
-          <div className="text-center py-10">
+          <div className="text-center py-16">
             {filteredData.length === 0 && searchTerm ? (
               <div>
-                <FileText size={40} className="mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500">No matching results found</p>
-                <p className="text-sm text-gray-400">Try a different search term</p>
+                <FileText size={48} className="mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-600 font-medium">No matching results found</p>
+                <p className="text-sm text-gray-500 mt-2">Try adjusting your search or filters</p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="mt-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors"
+                  >
+                    Clear all filters
+                  </button>
+                )}
               </div>
             ) : data.length === 0 ? (
               <div>
-                <FileText size={40} className="mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500">No data available</p>
-                <p className="text-sm text-gray-400">Upload a CSV file to get started</p>
+                <FileText size={48} className="mx-auto mb-4 text-gray-300" />
+                <p className="text-gray-600 font-medium">No data available</p>
+                <p className="text-sm text-gray-500 mt-2">Upload a CSV file to get started</p>
               </div>
             ) : (
               <p className="text-gray-500">No data to display</p>
@@ -252,11 +503,11 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
         )}
       </div>
       
-      {/* Pagination */}
+      {/* Pagination and row count display */}
       {filteredData.length > 0 && (
-        <div className="px-6 py-4 bg-white border-t border-gray-100 flex items-center justify-between">
-          <div className="text-sm text-gray-500 flex items-center">
-            <span className="mr-4">
+        <div className="px-6 py-4 bg-white border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-gray-500 flex items-center w-full sm:w-auto">
+            <span className="mr-3 whitespace-nowrap">
               Showing {Math.min((currentPage - 1) * rowsPerPage + 1, filteredData.length)} to {Math.min(currentPage * rowsPerPage, filteredData.length)} of {filteredData.length} entries
             </span>
             
@@ -266,7 +517,7 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
                 setRowsPerPage(Number(e.target.value));
                 setCurrentPage(1); // Reset to first page when changing page size
               }}
-              className="border border-gray-300 rounded p-1 text-sm"
+              className="border border-gray-300 rounded p-1.5 text-sm bg-white shadow-sm"
             >
               <option value={10}>10 rows</option>
               <option value={25}>25 rows</option>
@@ -274,11 +525,24 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
               <option value={100}>100 rows</option>
             </select>
           </div>
-          <div className="flex space-x-2">
+          
+          {/* Pagination controls */}
+          <div className="flex space-x-2 w-full sm:w-auto justify-center">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className={`px-3 py-1.5 border rounded-md text-sm font-medium ${
+                currentPage === 1
+                  ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              First
+            </button>
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className={`px-3 py-1 border rounded-md text-sm font-medium ${
+              className={`px-3 py-1.5 border rounded-md text-sm font-medium ${
                 currentPage === 1
                   ? 'border-gray-200 text-gray-400 cursor-not-allowed'
                   : 'border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -286,9 +550,11 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
             >
               Previous
             </button>
-            <div className="flex items-center space-x-1">
+            
+            <div className="flex items-center space-x-1 px-2">
+              {/* Show page numbers */}
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                // Calculate page numbers to show (centered around current page)
+                // Calculate which page numbers to show
                 let pageNum;
                 if (totalPages <= 5) {
                   pageNum = i + 1;
@@ -315,28 +581,33 @@ const DataTable: React.FC<DataTableProps> = ({ data, headers }) => {
                 );
               })}
               
+              {/* Show ellipsis for skipped pages */}
               {totalPages > 5 && currentPage < totalPages - 2 && (
-                <>
-                  <span className="text-gray-500">...</span>
-                  <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    className="w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
-                  >
-                    {totalPages}
-                  </button>
-                </>
+                <span className="text-gray-500 px-1">...</span>
               )}
             </div>
+            
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className={`px-3 py-1 border rounded-md text-sm font-medium ${
+              className={`px-3 py-1.5 border rounded-md text-sm font-medium ${
                 currentPage === totalPages
                   ? 'border-gray-200 text-gray-400 cursor-not-allowed'
                   : 'border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
               Next
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1.5 border rounded-md text-sm font-medium ${
+                currentPage === totalPages
+                  ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Last
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Key, Check, AlertTriangle, Loader2, Lock, Shield } from 'lucide-react';
+import { X, Key, Check, AlertTriangle, Loader2, Lock, Shield, Sparkles, Copy } from 'lucide-react';
 import { checkAPIKeyValidity, initializeOpenAI, isAPIKeyConfigured } from '../../utils/openai';
 
 interface APIKeyModalProps {
@@ -13,6 +13,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
   const [error, setError] = useState<string | null>(null);
   const [hasExistingKey, setHasExistingKey] = useState(false);
   const [isUsingDemoKey, setIsUsingDemoKey] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   useEffect(() => {
     // Check if there's already a key stored
@@ -73,11 +74,17 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
       setIsChecking(false);
     }
   };
+
+  // Function to handle the copy link
+  const handleCopy = () => {
+    navigator.clipboard.writeText('https://platform.openai.com/api-keys');
+    // You could add a toast notification here if desired
+  };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden">
-        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold flex items-center">
               <Key className="mr-2" size={20} />
@@ -85,23 +92,27 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
             </h3>
             <button 
               onClick={onClose}
-              className="p-1 hover:bg-white/20 rounded text-white"
+              className="p-1.5 hover:bg-white/20 rounded-full text-white"
+              disabled={isChecking}
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
         </div>
         
         <div className="p-6">
           <div className="mb-6">
-            <p className="text-gray-600">
-              Connect your OpenAI API key to enable AI-powered data analysis. The default model is o3-mini, which offers efficient and cost-effective business intelligence.
-            </p>
+            <div className="flex items-start bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100">
+              <Sparkles size={18} className="mr-2 text-blue-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm">
+                Connect your OpenAI API key to enable AI-powered data analysis. The default model is o3-mini, which offers efficient and cost-effective business intelligence.
+              </p>
+            </div>
           </div>
           
           <form onSubmit={handleSubmit}>
             <div className="mb-5">
-              <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1.5">
                 OpenAI API Key
               </label>
               <div className="relative">
@@ -110,17 +121,34 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
                 </div>
                 <input
                   id="apiKey"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="sk-..."
-                  className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
               </div>
-              <div className="mt-1 flex justify-between">
-                <p className="text-sm text-gray-500">
-                  Need an API key? <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Get one from OpenAI</a>
-                </p>
+              <div className="mt-2 flex justify-between items-center">
+                <div className="flex items-center">
+                  <p className="text-sm text-gray-500">
+                    Need a key? <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Get one from OpenAI</a>
+                  </p>
+                  <button 
+                    type="button" 
+                    onClick={handleCopy}
+                    className="ml-1 p-1 text-gray-400 hover:text-blue-600 rounded"
+                    title="Copy link"
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
                 {hasExistingKey && (
                   <button
                     type="button"
@@ -134,7 +162,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
             </div>
             
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start">
                 <AlertTriangle size={18} className="text-red-600 mr-2 mt-0.5 flex-shrink-0" />
                 <p className="text-red-600 text-sm">{error}</p>
               </div>
@@ -150,11 +178,11 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
               type="button"
               onClick={handleUseDemoKey}
               disabled={isChecking || isUsingDemoKey}
-              className={`w-full mb-4 py-2.5 px-4 flex items-center justify-center rounded-md text-white font-medium ${
+              className={`w-full mb-4 py-3 px-4 flex items-center justify-center rounded-lg text-white font-medium ${
                 isChecking || isUsingDemoKey 
                   ? 'bg-indigo-400 cursor-not-allowed' 
                   : 'bg-indigo-600 hover:bg-indigo-700'
-              } transition-colors`}
+              } transition-colors shadow-sm`}
             >
               {isUsingDemoKey ? (
                 <>
@@ -173,14 +201,17 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                disabled={isChecking}
+                className={`px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm ${
+                  isChecking ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isChecking || !apiKey || apiKey === '•••••••••••••••••••••••••••••••••'}
-                className={`px-4 py-2 bg-blue-600 text-white rounded-md flex items-center ${
+                className={`px-4 py-2.5 bg-blue-600 text-white rounded-lg flex items-center shadow-sm ${
                   isChecking || !apiKey || apiKey === '•••••••••••••••••••••••••••••••••' ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700'
                 } transition-colors`}
               >
@@ -199,26 +230,34 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
             </div>
           </form>
           
-          <div className="mt-6 pt-4 border-t border-gray-100">
+          <div className="mt-6 pt-5 border-t border-gray-100">
             <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-              <Shield size={16} className="mr-1 text-blue-600" />
+              <Shield size={16} className="mr-1.5 text-blue-600" />
               Security and benefits:
             </h4>
-            <ul className="text-sm text-gray-600 space-y-2 mt-3">
+            <ul className="text-sm text-gray-600 space-y-2.5 mt-3">
               <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
+                <div className="rounded-full bg-green-100 p-0.5 mr-2 mt-0.5">
+                  <Check size={12} className="text-green-600" />
+                </div>
                 <span>Data privacy guaranteed - your data never leaves your system</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
+                <div className="rounded-full bg-green-100 p-0.5 mr-2 mt-0.5">
+                  <Check size={12} className="text-green-600" />
+                </div>
                 <span>Demo mode available for testing without an API key</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
+                <div className="rounded-full bg-green-100 p-0.5 mr-2 mt-0.5">
+                  <Check size={12} className="text-green-600" />
+                </div>
                 <span>Executive-ready analysis with professional formatting</span>
               </li>
               <li className="flex items-start">
-                <span className="text-green-500 mr-2">✓</span>
+                <div className="rounded-full bg-green-100 p-0.5 mr-2 mt-0.5">
+                  <Check size={12} className="text-green-600" />
+                </div>
                 <span>Your key is stored only in your browser's secure storage</span>
               </li>
             </ul>
