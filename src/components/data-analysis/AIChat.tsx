@@ -41,7 +41,7 @@ const AIChat: React.FC<AIChatProps> = ({
   // Available models
   const models = [
     { id: 'o3-mini-2025-01-31', name: 'o3-mini (2025-01-31)', description: 'Faster, more efficient model for business analyses' },
-    { id: 'gpt-4o', name: 'GPT-4o', description: 'Powerful model with comprehensive business analysis capabilities' }
+    { id: 'gpt-4.1', name: 'GPT-4.1', description: 'Powerful model with comprehensive business analysis capabilities' }
   ];
 
   // Check if API key is configured

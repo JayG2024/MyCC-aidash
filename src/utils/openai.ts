@@ -508,10 +508,11 @@ Your goal is to provide a professional, executive-ready analysis that helps deci
     
     // Handle different model formats
     let modelName = model;
-    
     // Special handling for o3-mini model which has a specific date in the UI but needs 'o3-mini' for the API
     if (model === 'o3-mini-2025-01-31') {
       modelName = 'o3-mini';
+    } else if (model === 'gpt-4.1') {
+      modelName = 'gpt-4.1';
     }
     
     console.log(`Using OpenAI model: ${modelName}`);
