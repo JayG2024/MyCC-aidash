@@ -101,6 +101,12 @@ const DataUpload: React.FC<DataUploadProps> = ({
           return;
         }
 
+        // Check for empty data
+        if (!results.data || results.data.length === 0) {
+          setError('No data rows found in the CSV file. Please check your file and try again.');
+          return;
+        }
+
         // For large datasets, provide information
         const rowCount = results.data.length;
         if (rowCount > 10000) {
