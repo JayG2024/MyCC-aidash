@@ -516,7 +516,7 @@ Your goal is to provide a professional, executive-ready analysis that helps deci
       model: modelName,
       messages: allMessages as any,
       temperature: 0.2, // Lower temperature for more factual/analytical responses
-      max_tokens: 2000  // Token limit for response
+      max_completion_tokens: 2000  // Token limit for response
     });
     
     return response.choices[0]?.message?.content || null;

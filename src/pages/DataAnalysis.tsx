@@ -8,7 +8,7 @@ import SaveToLibraryModal from '../components/data-analysis/SaveToLibraryModal';
 import APIKeyModal from '../components/data-analysis/APIKeyModal';
 import { saveCSVData, loadCSVData, saveChatHistory, loadChatHistory, StoredCSVData } from '../utils/localStorage';
 import { isAPIKeyConfigured, clearOpenAIApiKey } from '../utils/openai';
-import { FileDown, FileUp, Database, Brain, Trash2, AlertTriangle, BookOpen, Key, Info, FileText } from 'lucide-react';
+import { FileDown, FileUp, Database, Brain, Trash2, AlertTriangle, BookOpen, Key, Info, FileText, Check } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 
 const DataAnalysis: React.FC = () => {
@@ -24,6 +24,7 @@ const DataAnalysis: React.FC = () => {
   const [hasApiKey, setHasApiKey] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState<{ rows: number, columns: number } | null>(null);
   const [isMockData, setIsMockData] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   useEffect(() => {
     const loadSavedData = async () => {
@@ -58,18 +59,31 @@ const DataAnalysis: React.FC = () => {
     loadSavedData();
   }, []);
 
-  const handleDataParsed = async (data: any[], headers: string[]) => {
+  const handleDataParsed = async (data: any[], headers: string[], originalFileName?: string) => {
+    console.log('Data parsed successfully:', { 
+      rows: data.length, 
+      columns: headers.length, 
+      headers,
+      sampleData: data.slice(0, 3),
+      originalFileName 
+    });
+    
     setCsvData(data);
     setHeaders(headers);
-    setFileName('Uploaded CSV');
+    setFileName(originalFileName || 'Uploaded File');
     setShowWarning(false);
+    setUploadSuccess(true);
     setDatasetInfo({
       rows: data.length,
       columns: headers.length
     });
     
+    // Clear success message after 3 seconds
+    setTimeout(() => setUploadSuccess(false), 3000);
+    
     try {
-      await saveCSVData(data, headers, 'Uploaded CSV');
+      await saveCSVData(data, headers, originalFileName || 'Uploaded File');
+      console.log('Data saved successfully to localStorage');
     } catch (error) {
       console.error('Error saving data:', error);
       // Handle error (could show a notification to the user)
@@ -189,6 +203,19 @@ const DataAnalysis: React.FC = () => {
             </div>
           </div>
           
+          {/* Success notification */}
+          {uploadSuccess && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start">
+              <Check className="text-green-500 mr-3 mt-0.5 flex-shrink-0" size={20} />
+              <div>
+                <h3 className="font-medium text-green-800">Upload Successful!</h3>
+                <p className="text-green-700 text-sm">
+                  Your data has been processed and is ready for analysis. The table and AI assistant are now available.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Warning for old data */}
           {showWarning && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start">
@@ -295,8 +322,16 @@ const DataAnalysis: React.FC = () => {
                     <p className="text-gray-600">Loading saved data...</p>
                   </div>
                 </div>
-              ) : csvData && csvData.length > 0 && headers ? (
-                <DataTable data={csvData} headers={headers} />
+              ) : csvData && csvData.length > 0 && headers && headers.length > 0 ? (
+                <>
+                  {console.log('Rendering DataTable with:', { 
+                    dataLength: csvData.length, 
+                    headers: headers.length,
+                    fileName: fileName,
+                    firstRow: csvData[0]
+                  })}
+                  <DataTable data={csvData} headers={headers} />
+                </>
               ) : (
                 <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex items-center justify-center">
                   <div className="text-center">

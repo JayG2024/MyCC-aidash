@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { Upload, AlertCircle, Check, Loader2, BookOpen, Save, Info, FileText, X, UploadCloud as CloudUpload } from 'lucide-react';
 
 interface DataUploadProps {
-  onDataParsed: (data: Record<string, unknown>[], headers: string[]) => void;
+  onDataParsed: (data: Record<string, unknown>[], headers: string[], fileName?: string) => void;
   onBrowseLibrary: () => void;
   onSaveToLibrary: () => void;
   hasActiveData: boolean;
@@ -97,6 +97,11 @@ const DataUpload: React.FC<DataUploadProps> = ({
           }
         },
         complete: (results) => {
+          console.log('CSV parsing complete:', {
+            rows: results.data.length,
+            headers: results.meta.fields,
+            errors: results.errors
+          });
           handleParseComplete(results.data, results.meta.fields || [], results.errors);
         },
         error: (error) => {
@@ -162,6 +167,11 @@ const DataUpload: React.FC<DataUploadProps> = ({
         });
         
         setProgress(100);
+        console.log('Excel parsing complete:', {
+          rows: dataRows.length,
+          headers: headers,
+          sampleData: dataRows.slice(0, 2)
+        });
         handleParseComplete(dataRows, headers, []);
         
       } catch (error) {
@@ -213,7 +223,7 @@ const DataUpload: React.FC<DataUploadProps> = ({
     }
 
     setSuccess(true);
-    onDataParsed(data, headers);
+    onDataParsed(data, headers, fileName);
   };
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
