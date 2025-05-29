@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   PenSquare, X, Settings, UserCircle, LogOut, Database, Menu
 } from 'lucide-react';
+import { logout } from '../../utils/auth';
 
 interface SidebarLinkProps {
   to: string;
@@ -33,6 +34,7 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
@@ -41,6 +43,17 @@ const Sidebar: React.FC = () => {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+  
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to log out?')) {
+      try {
+        await logout();
+        navigate('/login');
+      } catch (error) {
+        console.error('Error logging out:', error);
+      }
+    }
   };
 
   return (
@@ -110,7 +123,10 @@ const Sidebar: React.FC = () => {
 
           {/* Logout */}
           <div className="p-4 border-t">
-            <button className="flex items-center w-full px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100">
+            <button 
+              className="flex items-center w-full px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100"
+              onClick={handleLogout}
+            >
               <LogOut size={20} className="mr-3" />
               <span className="font-medium">Logout</span>
             </button>

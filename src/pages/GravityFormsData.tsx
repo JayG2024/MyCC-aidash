@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
-import { AlertTriangle, Database, RefreshCw, ExternalLink, Key, CheckCircle, Code, Bot, Send, Loader2, FileText, MessageCircle, Info, X } from 'lucide-react';
+import { AlertTriangle, Database, RefreshCw, ExternalLink, Key, CheckCircle, Code, Bot, Send, Loader2, FileText, MessageCircle, Info, X, Link } from 'lucide-react';
 import { analyzeDataWithGPT, isAPIKeyConfigured } from '../utils/openai';
 import ReactMarkdown from 'react-markdown';
 import ErrorBoundary from '../components/ErrorBoundary';
@@ -13,7 +13,6 @@ const GravityFormsData: React.FC = () => {
   const [errorDetails, setErrorDetails] = useState<any>(null);
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [connectionSuccess, setConnectionSuccess] = useState(false);
-  const [isMockData, setIsMockData] = useState(true); // Set to true by default for client demo
   
   // AI Chat state
   const [chatOpen, setChatOpen] = useState(false);
@@ -22,7 +21,6 @@ const GravityFormsData: React.FC = () => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [integrationDisabled, setIntegrationDisabled] = useState(false);
 
   useEffect(() => {
     // Check if OpenAI API key is configured
@@ -44,9 +42,14 @@ const GravityFormsData: React.FC = () => {
     try {
       console.log('Fetching Gravity Forms data');
       
-      // Remove the '/api' prefix since routes are now mounted at the root level
+      // Routes are mounted at the root level
       const response = await fetch('/gravity-forms');
       console.log('Gravity Forms API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(`API returned status ${response.status}${errorData ? `: ${errorData.error || 'Unknown error'}` : ''}`);
+      }
       
       const data = await response.json();
       console.log('Gravity Forms API response data:', data);
@@ -58,14 +61,13 @@ const GravityFormsData: React.FC = () => {
       } else if (Array.isArray(data)) {
         setForms(data);
         setConnectionSuccess(true);
-        setIsMockData(true); // Always set to true for client demo
       } else {
         setError('Unexpected response format');
         setForms([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching forms:', error);
-      setError('Failed to connect to the Gravity Forms API');
+      setError(`Failed to connect to the Gravity Forms API: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -77,23 +79,36 @@ const GravityFormsData: React.FC = () => {
     setEntries([]);
     
     try {
-      // Remove the '/api' prefix since routes are now mounted at the root level
+      // Routes are mounted at the root level
       const response = await fetch(`/gravity-forms/${formId}/entries`);
       console.log(`Entries API response status for form ${formId}:`, response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(`API returned status ${response.status}${errorData ? `: ${errorData.error || 'Unknown error'}` : ''}`);
+      }
       
       const data = await response.json();
       console.log(`Entries API response data for form ${formId}:`, data);
       
-      if (Array.isArray(data)) {
+      if (data.error) {
+        setError(data.error);
+        setEntries([]);
+        return [];
+      } else if (Array.isArray(data)) {
         setEntries(data);
         return data;
+      } else if (data.entries && Array.isArray(data.entries)) {
+        // Handle case where entries might be nested under an 'entries' property
+        setEntries(data.entries);
+        return data.entries;
       } else {
         setError('Unexpected response format for entries');
         return [];
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error fetching entries for form ${formId}:`, error);
-      setError(`Failed to fetch entries for form ${formId}`);
+      setError(`Failed to fetch entries for form ${formId}: ${error.message}`);
       return [];
     } finally {
       setLoading(false);
@@ -157,10 +172,10 @@ const GravityFormsData: React.FC = () => {
                 <p className="text-gray-600 mt-1">
                   View and analyze data from your WordPress Gravity Forms
                 </p>
-                {isMockData && (
-                  <div className="mt-2 inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                    <Info size={14} className="mr-1" />
-                    Demo Mode: Using sample data
+                {connectionSuccess && (
+                  <div className="mt-2 inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                    <CheckCircle size={14} className="mr-1" />
+                    Connected to WordPress API
                   </div>
                 )}
               </div>
@@ -203,10 +218,24 @@ const GravityFormsData: React.FC = () => {
                 <h3 className="font-medium text-red-800">Connection Error</h3>
                 <p className="text-red-700">{error}</p>
                 {errorDetails && (
-                  <pre className="mt-2 text-xs bg-red-100 p-2 rounded overflow-x-auto">
-                    {JSON.stringify(errorDetails, null, 2)}
-                  </pre>
+                  <details className="mt-2">
+                    <summary className="text-sm cursor-pointer text-red-600 font-medium">View technical details</summary>
+                    <pre className="mt-2 text-xs bg-red-100 p-2 rounded overflow-x-auto">
+                      {JSON.stringify(errorDetails, null, 2)}
+                    </pre>
+                  </details>
                 )}
+                <div className="mt-3">
+                  <div className="text-sm text-red-700 bg-red-100 p-3 rounded-lg">
+                    <p className="font-medium">Troubleshooting Steps:</p>
+                    <ol className="list-decimal list-inside mt-1 space-y-1">
+                      <li>Verify your WordPress API URL in the .env file</li>
+                      <li>Check that your Consumer Key and Consumer Secret are valid</li>
+                      <li>Ensure Gravity Forms REST API v2 is enabled in WordPress</li>
+                      <li>Verify WordPress server can be reached from this application server</li>
+                    </ol>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -219,7 +248,8 @@ const GravityFormsData: React.FC = () => {
                 
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mb-3"></div>
+                    <p className="text-gray-500 ml-3">Loading forms...</p>
                   </div>
                 ) : forms.length === 0 ? (
                   <div className="text-center py-6">
@@ -227,9 +257,16 @@ const GravityFormsData: React.FC = () => {
                     <p className="text-gray-500 font-medium">
                       No forms found
                     </p>
-                    <p className="text-sm text-gray-500 mt-2">
+                    <p className="text-sm text-gray-500 mt-2 mb-4">
                       Check your API connection or refresh
                     </p>
+                    <button 
+                      onClick={fetchForms}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm inline-flex items-center"
+                    >
+                      <RefreshCw size={14} className="mr-1.5" />
+                      Retry Connection
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -280,9 +317,16 @@ const GravityFormsData: React.FC = () => {
                   <div className="text-center py-12">
                     <FileText size={48} className="mx-auto mb-4 text-gray-300" />
                     <h3 className="text-lg font-medium text-gray-700 mb-2">No entries found</h3>
-                    <p className="text-gray-500 max-w-md mx-auto">
+                    <p className="text-gray-500 max-w-md mx-auto mb-4">
                       This form doesn't have any entries yet
                     </p>
+                    <button 
+                      onClick={() => fetchEntries(selectedForm)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm inline-flex items-center"
+                    >
+                      <RefreshCw size={14} className="mr-1.5" />
+                      Refresh Entries
+                    </button>
                   </div>
                 </div>
               ) : chatOpen ? (

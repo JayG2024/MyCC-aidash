@@ -5,8 +5,8 @@ import localforage from 'localforage';
 let openaiClient: OpenAI | null = null;
 
 // Default API key that will be used if no user-provided key is found
-// Replace this with your actual OpenAI API key
-const DEFAULT_API_KEY = "sk-mycc-dashboard-demo-key-2025";
+// In production, this should be replaced with an environment variable
+const DEFAULT_API_KEY = process.env.OPENAI_API_KEY || "";
 
 export const initializeOpenAI = async (apiKey?: string): Promise<boolean> => {
   try {
@@ -55,7 +55,7 @@ export const clearOpenAIApiKey = async (): Promise<void> => {
 
 export const checkAPIKeyValidity = async (apiKey: string): Promise<boolean> => {
   // For the demo key, always return true without making an API call
-  if (apiKey === DEFAULT_API_KEY) {
+  if (apiKey === DEFAULT_API_KEY && DEFAULT_API_KEY) {
     console.log('Using demo API key');
     return true;
   }
@@ -427,12 +427,6 @@ export const analyzeDataWithGPT = async (
       throw new Error('OpenAI client not initialized. Please provide your API key.');
     }
     
-    // For demo mode with default API key, return a simulated response
-    if (client.apiKey === DEFAULT_API_KEY) {
-      console.log('Using demo API key - generating simulated response');
-      return generateDemoAnalysisResponse(messages, csvData, headers);
-    }
-    
     // Process large datasets in chunks
     const chunkSize = 1000; // Adjust based on your typical dataset size
     const processedData = processDataInChunks(csvData, headers, chunkSize);
@@ -522,203 +516,14 @@ Your goal is to provide a professional, executive-ready analysis that helps deci
       model: modelName,
       messages: allMessages as any,
       temperature: 0.2, // Lower temperature for more factual/analytical responses
-      max_completion_tokens: 2000  // Fixed parameter name for token limit
+      max_tokens: 2000  // Token limit for response
     });
     
     return response.choices[0]?.message?.content || null;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error analyzing data with GPT:', error);
     throw error;
   }
-};
-
-// Generate a simulated AI analysis response for demo purposes
-const generateDemoAnalysisResponse = (
-  messages: Array<{ role: string; content: string }>,
-  data: any[],
-  headers: string[]
-): string => {
-  // Get the last user message
-  const lastUserMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
-  
-  // Check for some common question patterns and return appropriate responses
-  if (lastUserMessage.toLowerCase().includes('summary') || 
-      lastUserMessage.toLowerCase().includes('overview') ||
-      lastUserMessage.toLowerCase().includes('analyze')) {
-    return `# Executive Data Summary
-
-## Overview
-I've analyzed your dataset containing **${data.length.toLocaleString()} records** across **${headers.length} fields**. Here's what I found:
-
-### Key Insights
-- **Growth Trend**: Sales have shown a 23% year-over-year increase, with Q2 2025 being the strongest quarter
-- **Product Performance**: Premium subscription tier outperforms basic offerings with 37% higher retention
-- **Regional Analysis**: Northeast region shows 18% higher conversion rates than other territories
-- **Customer Segments**: Enterprise clients deliver 3.2x higher lifetime value than SMB accounts
-
-## Detailed Analysis
-
-### Sales Performance by Category
-
-| Category | Revenue | Growth | Profit Margin |
-|----------|---------|--------|--------------|
-| Enterprise | $1,245,000 | +32.5% | 42.8% |
-| SMB | $875,200 | +17.8% | 38.2% |
-| Consumer | $543,800 | -3.2% | 52.1% |
-| **Total** | **$2,664,000** | **+23.1%** | **43.6%** |
-
-### Marketing Channel Effectiveness
-
-| Channel | Leads | Conversion Rate | CAC | ROI |
-|---------|-------|----------------|-----|-----|
-| Paid Search | 1,240 | 5.8% | $412 | 2.4x |
-| LinkedIn | 825 | 7.2% | $385 | 3.1x |
-| Referral | 312 | 12.4% | $105 | 8.5x |
-
-## Recommendations
-
-1. **Increase investment in referral programs** - highest conversion rate and lowest customer acquisition cost
-2. **Review Consumer Subscription positioning** - only category showing decline despite high margins
-3. **Expand Northeast sales team capacity** to capitalize on higher regional performance
-
-Would you like me to drill down into any particular aspect of this analysis?`;
-  } 
-  else if (lastUserMessage.toLowerCase().includes('trend') || 
-           lastUserMessage.toLowerCase().includes('over time') ||
-           lastUserMessage.toLowerCase().includes('growth')) {
-    return `# Trend Analysis
-
-## Growth Patterns Over Time
-
-I've analyzed the time-series patterns in your data and identified these key trends:
-
-### Quarterly Performance (2023-2025)
-
-| Quarter | Revenue | YoY Growth | New Customers | Retention |
-|---------|---------|------------|--------------|-----------|
-| Q1 2023 | $1.2M | - | 124 | 78% |
-| Q2 2023 | $1.4M | - | 156 | 81% |
-| Q3 2023 | $1.6M | - | 187 | 83% |
-| Q4 2023 | $1.8M | - | 214 | 85% |
-| Q1 2024 | $1.9M | +58% | 232 | 86% |
-| Q2 2024 | $2.1M | +50% | 245 | 87% |
-| Q3 2024 | $2.3M | +44% | 268 | 88% |
-| Q4 2024 | $2.5M | +39% | 284 | 89% |
-| Q1 2025 | $2.7M | +42% | 312 | 91% |
-| Q2 2025 | $3.1M | +48% | 345 | 92% |
-
-## Key Growth Insights
-
-- **Accelerating Growth**: After a period of steady growth (39-44%), we're seeing acceleration to 48% in the most recent quarter
-- **Seasonal Patterns**: Q2 and Q4 consistently show the strongest performance, with approximately 12-15% higher revenue than preceding quarters
-- **Retention Correlation**: For every 1% increase in retention, we see approximately 4.8% increase in revenue the following quarter
-
-## Forecasting
-
-Based on current trends, I project:
-- **Q3 2025**: $3.4-3.6M revenue (10-15% growth from Q2)
-- **Q4 2025**: $3.8-4.1M revenue (12-18% growth from Q3)
-- **Full Year 2025**: $12.8-13.2M total revenue
-
-## Recommendations
-
-1. **Capitalize on Q4 seasonal strength** by planning major product releases and marketing campaigns for this period
-2. **Focus on retention initiatives** as they strongly correlate with revenue growth
-3. **Invest in Northeast region expansion** where growth is outpacing other regions by 28%
-
-Would you like me to explore any specific time period or metric in more detail?`;
-  }
-  else if (lastUserMessage.toLowerCase().includes('customer') || 
-           lastUserMessage.toLowerCase().includes('segment') ||
-           lastUserMessage.toLowerCase().includes('audience')) {
-    return `# Customer Segment Analysis
-
-## Overview
-
-I've analyzed your customer data across various segments and identified significant patterns in behavior, value, and growth potential.
-
-## Customer Segments by Value
-
-| Segment | % of Customers | % of Revenue | Avg. LTV | Growth Rate |
-|---------|----------------|--------------|----------|-------------|
-| Enterprise | 12% | 46% | $42,500 | +32% |
-| Mid-Market | 28% | 34% | $12,800 | +24% |
-| Small Business | 35% | 16% | $4,850 | +15% |
-| Startup | 25% | 4% | $1,650 | +42% |
-
-## Key Insights by Segment
-
-### Enterprise Segment
-- **Highest LTV** at $42,500 per customer
-- **Longest sales cycle** (68 days average)
-- **Primary drivers**: Security features (87%), compliance (78%), integration capabilities (72%)
-- **Churn rate**: 5.8% annually
-
-### Mid-Market Segment
-- **Fastest growing revenue contribution** (+24% YoY)
-- **Sales cycle**: 42 days average
-- **Primary drivers**: Scalability (82%), pricing (76%), support quality (68%)
-- **Churn rate**: 9.4% annually
-
-### Small Business Segment
-- **Highest customer count** (35% of total)
-- **Sales cycle**: 28 days average
-- **Primary drivers**: Ease of use (89%), price (85%), onboarding support (72%)
-- **Churn rate**: 14.2% annually
-
-### Startup Segment
-- **Fastest growing segment** (+42% YoY customer acquisition)
-- **Shortest sales cycle** (14 days average)
-- **Primary drivers**: Free tier (92%), simple pricing (86%), no lock-in (78%)
-- **Churn rate**: 22.5% annually
-
-## Recommendations
-
-1. **Develop enterprise-focused features** that address security and compliance needs
-2. **Create a specialized mid-market sales team** to capitalize on this segment's growth and higher conversion rates
-3. **Implement tiered support packages** as support quality is a key driver for mid-market customers
-4. **Develop a "Startup Growth" program** to help highest-growth customers transition to higher tiers
-
-Would you like me to explore any particular segment in more depth?`;
-  }
-  
-  // Default response for other types of questions
-  return `# Data Analysis Results
-
-## Executive Summary
-
-Based on my analysis of your dataset with ${data.length.toLocaleString()} records, I've identified several key patterns and insights that can help inform your business decisions.
-
-### Key Findings
-
-- **Performance Metrics**: Your top-performing category shows a 28% higher conversion rate than others
-- **Regional Variations**: Significant differences in performance across regions, with the Northeast leading by 18%
-- **Customer Behavior**: Clear correlation between engagement frequency and retention rates
-- **Product Adoption**: Premium features see 3.2x higher usage in enterprise segments
-
-## Detailed Analysis
-
-| Metric | Value | YoY Change | Industry Benchmark |
-|--------|-------|------------|---------------------|
-| Revenue Growth | 23.5% | +4.2pp | 18.7% |
-| Customer Acquisition Cost | $315 | -12.8% | $425 |
-| Customer Lifetime Value | $4,850 | +18.3% | $3,920 |
-| Retention Rate | 86.4% | +3.7pp | 78.3% |
-
-### Opportunity Areas
-
-1. **Cross-selling potential**: 42% of customers use only one product
-2. **Underserved segments**: Mid-market companies show high interest but lower conversion
-3. **Geographic expansion**: Western region showing rapid growth from small base
-
-## Recommendations
-
-1. **Prioritize retention programs** for high-value segments
-2. **Revise pricing tiers** to better capture mid-market opportunity
-3. **Expand marketing in Northeast region** where performance exceeds other areas
-4. **Develop targeted offerings** for the financial services vertical
-
-Would you like me to explore any particular aspect of this analysis in more depth?`;
 };
 
 export const isAPIKeyConfigured = async (): Promise<boolean> => {
