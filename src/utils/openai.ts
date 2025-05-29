@@ -6,7 +6,7 @@ let openaiClient: OpenAI | null = null;
 
 // Default API key that will be used if no user-provided key is found
 // In production, this should be replaced with an environment variable
-const DEFAULT_API_KEY = process.env.OPENAI_API_KEY || "";
+const DEFAULT_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || "";
 
 export const initializeOpenAI = async (apiKey?: string): Promise<boolean> => {
   try {
