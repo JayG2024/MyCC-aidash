@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Papa from 'papaparse';
-import { Upload, FileUp, AlertCircle, Check, Loader2, BookOpen, Save, Info, FileText, X, CloudUpload } from 'lucide-react';
+import { Upload, FileUp, AlertCircle, Check, Loader2, BookOpen, Save, Info, FileText, X, UploadCloud as CloudUpload } from 'lucide-react';
 
 interface DataUploadProps {
   onDataParsed: (data: any[], headers: string[]) => void;
