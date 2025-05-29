@@ -13,13 +13,20 @@ const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const authed = await isAuthenticated();
-      setIsAuthed(authed);
-      setAuthChecked(true);
+      try {
+        const authed = await isAuthenticated();
+        console.log('Auth check result:', authed);
+        setIsAuthed(authed);
+        setAuthChecked(true);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setIsAuthed(false);
+        setAuthChecked(true);
+      }
     };
     
     checkAuth();
-  }, []);
+  }, [location.pathname]);
 
   if (!authChecked) {
     // Loading state while checking authentication

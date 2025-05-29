@@ -36,9 +36,12 @@ const Login: React.FC = () => {
     try {
       const user = await login(email, password);
       if (user) {
-        navigate('/');
+        console.log('Login successful, redirecting...');
+        // Force page reload to ensure auth state is updated
+        window.location.href = '/';
       }
     } catch (error: any) {
+      console.error('Login error:', error);
       setError(error.message || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -75,6 +78,15 @@ const Login: React.FC = () => {
             <p><strong>Demo credentials:</strong></p>
             <p className="mt-1">Email: admin@mycomputercareer.edu</p>
             <p>Password: admin123</p>
+            <button
+              onClick={() => {
+                setEmail('admin@mycomputercareer.edu');
+                setPassword('admin123');
+              }}
+              className="mt-2 text-xs bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded"
+            >
+              Auto-fill demo credentials
+            </button>
           </div>
           
           <form className="space-y-6" onSubmit={handleSubmit}>

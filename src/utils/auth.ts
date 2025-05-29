@@ -60,6 +60,8 @@ export const login = async (email: string, password: string): Promise<User | nul
     await localforage.setItem('current_user', userData);
     await localforage.setItem('auth_token', `mock-token-${Date.now()}`);
     
+    console.log('Login successful, user stored:', userData);
+    
     return userData;
   } catch (error) {
     console.error('Login error:', error);
