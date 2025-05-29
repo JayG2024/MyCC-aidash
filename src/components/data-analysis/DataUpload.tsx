@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Papa from 'papaparse';
-import { Upload, FileUp, AlertCircle, Check, Loader2, BookOpen, Save, Info, FileText, X, UploadCloud as CloudUpload } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { Upload, AlertCircle, Check, Loader2, BookOpen, Save, Info, FileText, X, UploadCloud as CloudUpload } from 'lucide-react';
 
 interface DataUploadProps {
-  onDataParsed: (data: any[], headers: string[]) => void;
+  onDataParsed: (data: Record<string, unknown>[], headers: string[]) => void;
   onBrowseLibrary: () => void;
   onSaveToLibrary: () => void;
   hasActiveData: boolean;
@@ -47,7 +48,7 @@ const DataUpload: React.FC<DataUploadProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleFile = (file: File) => {
+  const handleFile = useCallback((file: File) => {
     // Reset states
     setFileName(file.name);
     setFileSize(formatFileSize(file.size));
@@ -59,8 +60,12 @@ const DataUpload: React.FC<DataUploadProps> = ({
     setShowLargeFileWarning(false);
 
     // Validate file type
-    if (!file.name.endsWith('.csv')) {
-      setError('Please upload a CSV file');
+    const fileExtension = file.name.toLowerCase();
+    const isCSV = fileExtension.endsWith('.csv');
+    const isExcel = fileExtension.endsWith('.xlsx') || fileExtension.endsWith('.xls');
+    
+    if (!isCSV && !isExcel) {
+      setError('Please upload a CSV file (.csv) or Excel file (.xlsx, .xls)');
       setLoading(false);
       return;
     }
@@ -73,64 +78,142 @@ const DataUpload: React.FC<DataUploadProps> = ({
       setProcessingInfo('Large file detected. Processing may take a few moments...');
     }
 
-    // Configure Papa Parse with optimized settings for large files
-    Papa.parse(file, {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      worker: file.size > 5 * 1024 * 1024, // Use worker for files > 5MB
-      step: function(results, parser) {
-        // Update progress periodically for better UX
-        if (results.meta.cursor && file.size) {
-          const newProgress = Math.round((results.meta.cursor / file.size) * 100);
-          if (newProgress !== progress && newProgress % 5 === 0) {
-            setProgress(newProgress);
-            setProcessingInfo(`Processing ${newProgress}% complete...`);
+    // Process file based on type
+    if (isCSV) {
+      // Configure Papa Parse with optimized settings for large files
+      Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        worker: file.size > 5 * 1024 * 1024, // Use worker for files > 5MB
+        step: function(results) {
+          // Update progress periodically for better UX
+          if (results.meta.cursor && file.size) {
+            const newProgress = Math.round((results.meta.cursor / file.size) * 100);
+            if (newProgress !== progress && newProgress % 5 === 0) {
+              setProgress(newProgress);
+              setProcessingInfo(`Processing ${newProgress}% complete...`);
+            }
           }
+        },
+        complete: (results) => {
+          handleParseComplete(results.data, results.meta.fields || [], results.errors);
+        },
+        error: (error) => {
+          setLoading(false);
+          setError(`Error parsing CSV: ${error.message}`);
+          console.error('Papa Parse error:', error);
         }
-      },
-      complete: (results) => {
-        setLoading(false);
+      });
+    } else if (isExcel) {
+      // Process Excel file
+      processExcelFile(file);
+    }
+  }, [onDataParsed, progress]);
+
+  // Handle Excel file processing
+  const processExcelFile = (file: File) => {
+    setProcessingInfo('Processing Excel file...');
+    setProgress(25);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        setProgress(50);
+        setProcessingInfo('Reading Excel data...');
+        
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        setProgress(75);
+        setProcessingInfo('Converting to data format...');
+        
+        // Get the first worksheet
+        const sheetName = workbook.SheetNames[0];
+        if (!sheetName) {
+          setLoading(false);
+          setError('No worksheets found in the Excel file');
+          return;
+        }
+        
+        const worksheet = workbook.Sheets[sheetName];
+        
+        // Convert to JSON with header option
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+          header: 1,
+          defval: '',
+          blankrows: false
+        });
+        
+        if (!jsonData || jsonData.length === 0) {
+          setLoading(false);
+          setError('No data found in the Excel file');
+          return;
+        }
+        
+        // Extract headers and data
+        const headers = (jsonData[0] as string[]) || [];
+        const dataRows = jsonData.slice(1).map((row: unknown[]) => {
+          const obj: Record<string, unknown> = {};
+          headers.forEach((header, index) => {
+            obj[header] = row[index] || '';
+          });
+          return obj;
+        });
+        
         setProgress(100);
-
-        // Handle parse errors
-        if (results.errors && results.errors.length > 0) {
-          console.error('CSV parsing errors:', results.errors);
-          const errorMessages = results.errors.slice(0, 3).map(e => e.message).join('; ');
-          setError(`Error parsing CSV: ${errorMessages}${results.errors.length > 3 ? ' and more...' : ''}`);
-          return;
-        }
-
-        // Validate data
-        const headers = results.meta.fields || [];
-        if (headers.length === 0) {
-          setError('No data found in the CSV file');
-          return;
-        }
-
-        // Check for empty data
-        if (!results.data || results.data.length === 0) {
-          setError('No data rows found in the CSV file. Please check your file and try again.');
-          return;
-        }
-
-        // Handle large datasets with appropriate user information
-        const rowCount = results.data.length;
-        if (rowCount > 10000) {
-          setProcessingInfo(`Successfully processed ${rowCount.toLocaleString()} rows. AI analysis will process this data in chunks for optimal performance.`);
-        } else {
-          setProcessingInfo(null);
-        }
-
-        setSuccess(true);
-        onDataParsed(results.data, headers);
-      },
-      error: (error) => {
+        handleParseComplete(dataRows, headers, []);
+        
+      } catch (error) {
         setLoading(false);
-        setError(`Error parsing CSV: ${error.message}`);
-        console.error('Papa Parse error:', error);
+        setError(`Error processing Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error('Excel processing error:', error);
       }
-    });
+    };
+    
+    reader.onerror = () => {
+      setLoading(false);
+      setError('Error reading Excel file');
+    };
+    
+    reader.readAsArrayBuffer(file);
+  };
+
+  // Common function to handle parse completion
+  const handleParseComplete = (data: Record<string, unknown>[], headers: string[], errors?: Papa.ParseError[]) => {
+    setLoading(false);
+    setProgress(100);
+
+    // Handle parse errors
+    if (errors && errors.length > 0) {
+      console.error('File parsing errors:', errors);
+      const errorMessages = errors.slice(0, 3).map(e => e.message).join('; ');
+      setError(`Error parsing file: ${errorMessages}${errors.length > 3 ? ' and more...' : ''}`);
+      return;
+    }
+
+    // Validate data
+    if (headers.length === 0) {
+      setError('No column headers found in the file');
+      return;
+    }
+
+    // Check for empty data
+    if (!data || data.length === 0) {
+      setError('No data rows found in the file. Please check your file and try again.');
+      return;
+    }
+
+    // Handle large datasets with appropriate user information
+    const rowCount = data.length;
+    if (rowCount > 10000) {
+      setProcessingInfo(`Successfully processed ${rowCount.toLocaleString()} rows. AI analysis will process this data in chunks for optimal performance.`);
+    } else {
+      setProcessingInfo(null);
+    }
+
+    setSuccess(true);
+    onDataParsed(data, headers);
   };
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -140,13 +223,13 @@ const DataUpload: React.FC<DataUploadProps> = ({
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFile(e.dataTransfer.files[0]);
     }
-  }, []);
+  }, [handleFile]);
 
   const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       handleFile(e.target.files[0]);
     }
-  }, []);
+  }, [handleFile]);
 
   const handleClick = () => {
     if (fileInputRef.current) {
@@ -229,7 +312,7 @@ const DataUpload: React.FC<DataUploadProps> = ({
           <input 
             type="file" 
             className="hidden"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls"
             ref={fileInputRef}
             onChange={handleFileInputChange} 
           />
@@ -299,13 +382,13 @@ const DataUpload: React.FC<DataUploadProps> = ({
                 <Upload size={36} className="text-blue-600" />
               </div>
               <p className="text-lg font-medium text-gray-800 mb-2">
-                Drop your CSV file here
+                Drop your CSV or Excel file here
               </p>
               <p className="text-sm text-gray-500 mb-2">
                 or <span className="text-blue-600 font-medium">click to browse files</span>
               </p>
               <p className="text-xs text-gray-500 max-w-md mx-auto">
-                Supports files of any size - large datasets will be processed in chunks for optimal performance
+                Supports CSV (.csv) and Excel (.xlsx, .xls) files of any size - large datasets will be processed in chunks for optimal performance
               </p>
             </div>
           )}
