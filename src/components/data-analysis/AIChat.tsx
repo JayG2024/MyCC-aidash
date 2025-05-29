@@ -36,6 +36,8 @@ const AIChat: React.FC<AIChatProps> = ({
   const [isCheckingKey, setIsCheckingKey] = useState(true);
   const [selectedModel, setSelectedModel] = useState('o3-mini-2025-01-31');
   const [showModelSelector, setShowModelSelector] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [largeDataWarning, setLargeDataWarning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Available models
@@ -61,6 +63,14 @@ const AIChat: React.FC<AIChatProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (csvData && csvData.length > 100000) {
+      setLargeDataWarning(true);
+    } else {
+      setLargeDataWarning(false);
+    }
+  }, [csvData]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -79,6 +89,7 @@ const AIChat: React.FC<AIChatProps> = ({
     setMessages(prevMessages => [...prevMessages, userMessage]);
     setInput('');
     setIsLoading(true);
+    setErrorMessage(null);
 
     // Store all messages except system messages for context
     const userMessages = messages
@@ -86,24 +97,34 @@ const AIChat: React.FC<AIChatProps> = ({
       .concat(userMessage);
 
     try {
-      console.log('Analyzing data with model:', selectedModel);
-      
+      // Defensive: warn if data is huge
+      if (csvData.length > 200000) {
+        setErrorMessage('Warning: This is a very large dataset. Analysis may be slow or may fail due to browser memory limits.');
+      }
       // Call OpenAI API with selected model
       const response = await analyzeDataWithGPT(userMessages, csvData, headers, selectedModel);
-      
       if (response) {
         const assistantMessage: ChatMessage = {
           role: 'assistant',
           content: response
         };
-        
         setMessages(prevMessages => [...prevMessages, assistantMessage]);
       }
-    } catch (error) {
-      console.error('Error sending message to AI:', error);
+    } catch (error: any) {
+      let msg = 'Sorry, an error occurred while analyzing your data.';
+      if (error?.message?.includes('network')) {
+        msg = 'Network error: Please check your internet connection.';
+      } else if (error?.message?.includes('API key')) {
+        msg = 'OpenAI API key error: Please check your API key.';
+      } else if (error?.message?.toLowerCase().includes('memory')) {
+        msg = 'Memory error: The dataset may be too large for your browser. Try a smaller file.';
+      } else if (typeof error?.message === 'string') {
+        msg = error.message;
+      }
+      setErrorMessage(msg);
       setMessages(prevMessages => [
         ...prevMessages, 
-        { role: 'assistant', content: 'Sorry, I encountered an error while analyzing your data. Please check your API key or try again later.' }
+        { role: 'assistant', content: msg }
       ]);
     } finally {
       setIsLoading(false);
@@ -143,6 +164,21 @@ const AIChat: React.FC<AIChatProps> = ({
     <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 ${
       isExpanded ? 'fixed bottom-4 right-4 left-4 lg:left-auto lg:right-4 lg:w-[600px] h-[650px] z-50' : ''
     }`}>
+      {/* Error alert */}
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 flex items-center justify-between text-sm">
+          <span>{errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="ml-4 text-red-500 hover:text-red-700">✕</button>
+        </div>
+      )}
+      {/* Large data warning */}
+      {largeDataWarning && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 text-xs flex items-center">
+          <Info size={14} className="mr-2" />
+          Large dataset detected ({csvData.length.toLocaleString()} rows). Analysis may take longer and use more memory.
+        </div>
+      )}
+
       <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex justify-between items-center">
         <div className="flex items-center">
           <Bot className="mr-2" size={20} />

@@ -23,6 +23,7 @@ const DataUpload: React.FC<DataUploadProps> = ({
   const [success, setSuccess] = useState(false);
   const [processingInfo, setProcessingInfo] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [showLargeFileWarning, setShowLargeFileWarning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -51,6 +52,7 @@ const DataUpload: React.FC<DataUploadProps> = ({
     setSuccess(false);
     setProgress(0);
     setProcessingInfo(null);
+    setShowLargeFileWarning(false);
 
     if (!file.name.endsWith('.csv')) {
       setError('Please upload a CSV file');
@@ -58,8 +60,10 @@ const DataUpload: React.FC<DataUploadProps> = ({
       return;
     }
 
-    // For large files, show a processing message
-    if (file.size > 10 * 1024 * 1024) { // > 10MB
+    if (file.size > 50 * 1024 * 1024) { // > 50MB
+      setShowLargeFileWarning(true);
+      setProcessingInfo('Warning: This file is very large and may not process reliably in the browser. Consider splitting it into smaller files if you encounter issues.');
+    } else if (file.size > 10 * 1024 * 1024) { // > 10MB
       setProcessingInfo('Large file detected. Processing may take a few moments...');
     }
 
@@ -139,6 +143,21 @@ const DataUpload: React.FC<DataUploadProps> = ({
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      {/* Error alert */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 flex items-center justify-between text-sm mb-2">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="ml-4 text-red-500 hover:text-red-700">✕</button>
+        </div>
+      )}
+      {/* Large file warning */}
+      {showLargeFileWarning && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 text-xs flex items-center mb-2">
+          <Info size={14} className="mr-2" />
+          This file is very large. If you experience browser crashes or errors, try splitting the file into smaller parts.
+        </div>
+      )}
+      
       <h3 className="text-lg font-bold text-gray-800 mb-4 flex justify-between items-center">
         <span>Upload Data</span>
         {hasActiveData && (
@@ -220,13 +239,6 @@ const DataUpload: React.FC<DataUploadProps> = ({
           <div className="mt-3 flex items-center justify-center text-blue-600 text-sm">
             <Info size={16} className="mr-1" />
             {processingInfo}
-          </div>
-        )}
-        
-        {error && (
-          <div className="mt-3 flex items-center justify-center text-red-600 text-sm">
-            <AlertCircle size={16} className="mr-1" />
-            {error}
           </div>
         )}
       </div>
