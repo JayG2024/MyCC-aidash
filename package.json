@@ -12,7 +12,9 @@
     "dev:client": "vite",
     "dev:full": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "deploy": "npm run build && netlify deploy --prod",
+    "deploy:preview": "npm run build && netlify deploy"
   },
   "dependencies": {
     "@types/xlsx": "^0.0.35",
@@ -47,6 +49,7 @@
     "globals": "^15.9.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "netlify-cli": "^21.5.0",
     "nodemon": "^3.0.1",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
