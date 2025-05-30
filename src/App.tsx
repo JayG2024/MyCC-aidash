@@ -9,6 +9,7 @@ import UserProfile from './pages/UserProfile';
 import DataAnalysis from './pages/DataAnalysis';
 import GravityFormsData from './pages/GravityFormsData';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import AuthWrapper from './components/auth/AuthWrapper';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
       <AuthWrapper>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<Analytics />} />
           <Route path="/assistants" element={<AIAssistants />} />
           <Route path="/leads" element={<LeadManagement />} />

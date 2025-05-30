@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, AlertTriangle, Eye, EyeOff, LogIn } from 'lucide-react';
 import { login, isAuthenticated } from '../utils/firebase-auth';
 
@@ -195,6 +195,21 @@ const Login: React.FC = () => {
               </button>
             </div>
           </form>
+
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-gray-600 text-sm">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+                Request Access
+              </Link>
+            </p>
+            <p className="text-gray-600 text-sm">
+              Forgot your password?{' '}
+              <button className="text-blue-600 hover:text-blue-700 font-medium">
+                Contact Administrator
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>
