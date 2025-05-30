@@ -113,30 +113,6 @@ const Sidebar: React.FC = () => {
               onClick={closeMobileMenu}
             />
             
-            <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
-              Business Intelligence
-            </div>
-            <SidebarLink
-              to="/leads"
-              icon={<Users size={20} />}
-              label="Lead Management"
-              isActive={isActive('/leads')}
-              onClick={closeMobileMenu}
-            />
-            <SidebarLink
-              to="/reports"
-              icon={<FileText size={20} />}
-              label="Reports"
-              isActive={isActive('/reports')}
-              onClick={closeMobileMenu}
-            />
-            <SidebarLink
-              to="/assistants"
-              icon={<Bot size={20} />}
-              label="AI Assistants"
-              isActive={isActive('/assistants')}
-              onClick={closeMobileMenu}
-            />
 
             <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
               Account
@@ -146,13 +122,6 @@ const Sidebar: React.FC = () => {
               icon={<UserCircle size={20} />}
               label="Profile"
               isActive={isActive('/profile')}
-              onClick={closeMobileMenu}
-            />
-            <SidebarLink
-              to="/settings"
-              icon={<Settings size={20} />}
-              label="Settings"
-              isActive={isActive('/settings')}
               onClick={closeMobileMenu}
             />
           </nav>

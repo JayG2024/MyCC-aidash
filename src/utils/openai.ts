@@ -179,10 +179,10 @@ const generateDataStatistics = (data: any[], headers: string[]): any => {
         valueCounts[strVal] = (valueCounts[strVal] || 0) + 1;
       });
       
-      // Sort by frequency and get top 5
+      // Sort by frequency and get top 10 for better insights
       const topValues = Object.entries(valueCounts)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
+        .slice(0, 10)
         .map(([value, count]) => ({ value, count, percentage: (count / values.length) * 100 }));
       
       stats[header].topValues = topValues;
@@ -427,8 +427,8 @@ export const analyzeDataWithGPT = async (
       throw new Error('OpenAI client not initialized. Please provide your API key.');
     }
     
-    // Process large datasets in chunks
-    const chunkSize = 1000; // Adjust based on your typical dataset size
+    // Process large datasets in chunks - increased size for better performance
+    const chunkSize = 5000; // Handle larger datasets more efficiently
     const processedData = processDataInChunks(csvData, headers, chunkSize);
     console.log(`Processed data: ${processedData.processedInChunks ? 'Chunked' : 'Full'} dataset`);
     
@@ -443,13 +443,42 @@ export const analyzeDataWithGPT = async (
       processedData.statistics
     );
     
-    // Create a cleaned data sample
+    // Create a comprehensive data representation
     let dataSample: string;
-    if (processedData.data.length <= 10) {
-      dataSample = JSON.stringify(processedData.data, null, 2);
-    } else {
-      dataSample = JSON.stringify(processedData.data.slice(0, 10), null, 2);
+    let dataRepresentation: any = {
+      sampleRows: {
+        first5: processedData.data.slice(0, 5),
+        last5: processedData.data.slice(-5),
+        randomSamples: []
+      },
+      totalRowsAnalyzed: processedData.totalRows || csvData.length,
+      uniqueValuesPerColumn: {}
+    };
+    
+    // Add random samples from throughout the dataset
+    if (processedData.data.length > 20) {
+      const indices = [
+        Math.floor(processedData.data.length * 0.25),
+        Math.floor(processedData.data.length * 0.5),
+        Math.floor(processedData.data.length * 0.75)
+      ];
+      indices.forEach(idx => {
+        if (idx < processedData.data.length) {
+          dataRepresentation.sampleRows.randomSamples.push(processedData.data[idx]);
+        }
+      });
     }
+    
+    // Extract unique values for categorical columns (limit to reasonable amount)
+    headers.forEach(header => {
+      if (processedData.statistics[header]?.type === 'text' && 
+          processedData.statistics[header]?.uniqueCount <= 100) {
+        const uniqueVals = [...new Set(csvData.map(row => row[header]))].slice(0, 50);
+        dataRepresentation.uniqueValuesPerColumn[header] = uniqueVals;
+      }
+    });
+    
+    dataSample = JSON.stringify(dataRepresentation, null, 2);
     
     // Create statistics summary
     const statsJson = JSON.stringify(processedData.statistics, null, 2);
@@ -464,18 +493,22 @@ export const analyzeDataWithGPT = async (
       role: 'system',
       content: `You are an experienced data analyst specializing in business intelligence for sales and marketing executives. Your task is to help executives understand their data by providing clear, actionable insights with properly formatted outputs.
 
+CRITICAL INSTRUCTION: You MUST analyze and reference ONLY the actual data provided below. DO NOT use illustrative, example, or placeholder numbers. ALL statistics, values, and insights must be derived from the ACTUAL DATA shown below.
+
 DATASET INFORMATION:
 - Columns (${headers.length}): ${headers.join(', ')}
-- Total rows: ${processedData.totalRows || csvData.length}
-${processedData.processedInChunks ? `- Data processed in ${processedData.numChunks} chunks of ${chunkSize} rows each` : ''}
-- Sample of the data (first 10 rows):
+- Total rows analyzed: ${processedData.totalRows || csvData.length} (ENTIRE DATASET)
+${processedData.processedInChunks ? `- Data processed in ${processedData.numChunks} chunks of ${chunkSize} rows each for efficiency` : ''}
+- Representative data samples from throughout the dataset:
 ${dataSample}
 
-COLUMN STATISTICS SUMMARY:
+COMPREHENSIVE STATISTICS (calculated from ALL ${processedData.totalRows || csvData.length} rows):
 ${statsJson}
 
-IDENTIFIED RELATIONSHIPS:
+IDENTIFIED RELATIONSHIPS AND PATTERNS:
 ${relationshipsJson}
+
+CRITICAL: The statistics above represent analysis of the COMPLETE dataset (all ${processedData.totalRows || csvData.length} rows), not just the sample rows shown. When providing insights about sales trends, top products, geographic patterns, or any metrics, use these comprehensive statistics that cover 100% of the uploaded data.
 
 BUSINESS CONTEXT:
 The data will be analyzed by executives and sales/marketing leaders who want to:
@@ -493,8 +526,9 @@ OUTPUT FORMATTING REQUIREMENTS:
 5. Bold important conclusions or recommendations
 6. Provide a concise summary at the beginning
 7. Suggest specific actionable recommendations
+8. NEVER include disclaimers about "illustrative" or "example" data - always work with the actual data provided
 
-Your goal is to provide a professional, executive-ready analysis that helps decision-makers understand their data and take action. Focus on business implications rather than just statistics.`
+Your goal is to provide a professional, executive-ready analysis based on the ACTUAL DATA that helps decision-makers understand their data and take action. Focus on business implications of the real data rather than just statistics.`
     };
     
     // Combine with user messages

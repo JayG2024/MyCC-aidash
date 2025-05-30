@@ -160,7 +160,7 @@ const AIChat: React.FC<AIChatProps> = ({
   // Custom renderer for markdown content with better table styling
   const MarkdownRenderer = ({ content }: { content: string }) => {
     return (
-      <div className="markdown-content prose prose-sm max-w-none prose-headings:my-2 prose-p:my-1.5 prose-table:my-2 prose-headings:text-gray-800 prose-table:border-collapse">
+      <div className="markdown-content ai-response">
         <ReactMarkdown>
           {content}
         </ReactMarkdown>

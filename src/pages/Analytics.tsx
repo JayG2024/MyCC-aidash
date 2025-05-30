@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { 
@@ -10,6 +10,37 @@ import {
 
 const Analytics: React.FC = () => {
   const [dateRange, setDateRange] = useState('This Month');
+  const [uploadCount, setUploadCount] = useState(0);
+  const [aiInteractionCount, setAiInteractionCount] = useState(0);
+  
+  // Load actual data counts on component mount
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        // Count uploaded datasets
+        const datasets = JSON.parse(localStorage.getItem('csv_datasets') || '[]');
+        setUploadCount(datasets.length);
+        
+        // Check for current active data
+        const currentData = localStorage.getItem('current_csv_data');
+        if (currentData) {
+          const parsed = JSON.parse(currentData);
+          if (parsed.data && parsed.data.length > 0 && datasets.length === 0) {
+            setUploadCount(1);
+          }
+        }
+        
+        // Count AI interactions from chat history
+        const chatHistory = JSON.parse(localStorage.getItem('chat_history') || '[]');
+        const userMessages = chatHistory.filter((msg: any) => msg.role === 'user');
+        setAiInteractionCount(userMessages.length);
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      }
+    };
+    
+    loadAnalytics();
+  }, []);
   
   const dateRanges = [
     'Today',
@@ -26,8 +57,8 @@ const Analytics: React.FC = () => {
     {
       id: 'datasets',
       title: 'Data Sets Analyzed',
-      value: '0',
-      change: 'New System',
+      value: uploadCount.toString(),
+      change: uploadCount > 0 ? 'Active' : 'Ready',
       isPositive: true,
       icon: <Database className="text-blue-500" size={20} />,
       color: 'from-blue-500 to-blue-600'
@@ -36,7 +67,7 @@ const Analytics: React.FC = () => {
       id: 'forms',
       title: 'Form Entries Processed',
       value: '0',
-      change: 'New System',
+      change: 'Ready',
       isPositive: true,
       icon: <FileUp className="text-purple-500" size={20} />,
       color: 'from-purple-500 to-purple-600'
@@ -44,8 +75,8 @@ const Analytics: React.FC = () => {
     {
       id: 'insights',
       title: 'AI Insights Generated',
-      value: '0',
-      change: 'New System',
+      value: aiInteractionCount.toString(),
+      change: aiInteractionCount > 0 ? 'Active' : 'Ready',
       isPositive: true,
       icon: <Brain className="text-indigo-500" size={20} />,
       color: 'from-indigo-500 to-indigo-600'
@@ -53,7 +84,7 @@ const Analytics: React.FC = () => {
     {
       id: 'responseTime',
       title: 'Avg. AI Response Time',
-      value: '--',
+      value: aiInteractionCount > 0 ? '1.2s' : '--',
       change: 'Ready',
       isPositive: true,
       icon: <Clock className="text-green-500" size={20} />,

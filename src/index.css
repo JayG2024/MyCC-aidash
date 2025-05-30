@@ -1,3 +1,88 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom styles for AI response tables */
+.ai-response table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.ai-response th {
+  background-color: #f3f4f6;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.ai-response td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+
+.ai-response tr:last-child td {
+  border-bottom: none;
+}
+
+.ai-response tr:hover {
+  background-color: #f9fafb;
+}
+
+.ai-response thead {
+  background-color: #f3f4f6;
+}
+
+.ai-response tbody {
+  background-color: white;
+}
+
+/* Improve typography in AI responses */
+.ai-response h1, .ai-response h2, .ai-response h3 {
+  margin: 1rem 0 0.5rem 0;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.ai-response p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.ai-response ul, .ai-response ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.ai-response li {
+  margin: 0.25rem 0;
+}
+
+.ai-response code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.ai-response pre {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+/* Ensure tables are scrollable on small screens */
+.ai-response {
+  overflow-x: auto;
+}

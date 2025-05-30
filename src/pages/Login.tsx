@@ -73,6 +73,22 @@ const Login: React.FC = () => {
             </div>
           )}
           
+          {/* Login credentials info */}
+          <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm">
+            <p><strong>Quick Access:</strong></p>
+            <p className="mt-1">Email: admin@mycomputercareer.edu</p>
+            <p>Password: MyCC2024!Admin</p>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('admin@mycomputercareer.edu');
+                setPassword('MyCC2024!Admin');
+              }}
+              className="mt-2 text-xs bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded transition-colors"
+            >
+              Auto-fill credentials →
+            </button>
+          </div>
           
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
