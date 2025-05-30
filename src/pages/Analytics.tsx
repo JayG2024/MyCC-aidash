@@ -26,8 +26,8 @@ const Analytics: React.FC = () => {
     {
       id: 'datasets',
       title: 'Data Sets Analyzed',
-      value: '156',
-      change: '+12.4%',
+      value: '0',
+      change: 'New System',
       isPositive: true,
       icon: <Database className="text-blue-500" size={20} />,
       color: 'from-blue-500 to-blue-600'
@@ -35,8 +35,8 @@ const Analytics: React.FC = () => {
     {
       id: 'forms',
       title: 'Form Entries Processed',
-      value: '3,428',
-      change: '+8.7%',
+      value: '0',
+      change: 'New System',
       isPositive: true,
       icon: <FileUp className="text-purple-500" size={20} />,
       color: 'from-purple-500 to-purple-600'
@@ -44,8 +44,8 @@ const Analytics: React.FC = () => {
     {
       id: 'insights',
       title: 'AI Insights Generated',
-      value: '842',
-      change: '+23.5%',
+      value: '0',
+      change: 'New System',
       isPositive: true,
       icon: <Brain className="text-indigo-500" size={20} />,
       color: 'from-indigo-500 to-indigo-600'
@@ -53,50 +53,41 @@ const Analytics: React.FC = () => {
     {
       id: 'responseTime',
       title: 'Avg. AI Response Time',
-      value: '1.2s',
-      change: '-0.3s',
+      value: '--',
+      change: 'Ready',
       isPositive: true,
       icon: <Clock className="text-green-500" size={20} />,
       color: 'from-green-500 to-green-600'
     }
   ];
   
-  // Improved AI Assistants usage data to match actual platform features
+  // AI Assistants available in the platform - will show real usage data
   const assistantPerformance = [
     {
       id: 'data-analyst',
       name: 'Executive Data Analyst',
-      usageCount: 1250,
-      usagePercent: 85,
-      successRate: 98.4,
-      avgResponseTime: 1.2,
+      usageCount: 0,
+      usagePercent: 0,
+      successRate: 0,
+      avgResponseTime: 0,
       color: 'bg-blue-500'
     },
     {
-      id: 'content-creator',
-      name: 'Enterprise Content Studio',
-      usageCount: 835,
-      usagePercent: 62,
-      successRate: 95.2,
-      avgResponseTime: 1.5,
-      color: 'bg-purple-500'
-    },
-    {
       id: 'form-analyzer',
-      name: 'Form Data Analyzer',
-      usageCount: 687,
-      usagePercent: 43,
-      successRate: 99.1,
-      avgResponseTime: 1.0,
+      name: 'Gravity Forms Analyzer',
+      usageCount: 0,
+      usagePercent: 0,
+      successRate: 0,
+      avgResponseTime: 0,
       color: 'bg-emerald-500'
     },
     {
       id: 'lead-manager',
       name: 'Lead Insights Assistant',
-      usageCount: 412,
-      usagePercent: 31,
-      successRate: 94.7,
-      avgResponseTime: 1.8,
+      usageCount: 0,
+      usagePercent: 0,
+      successRate: 0,
+      avgResponseTime: 0,
       color: 'bg-amber-500'
     }
   ];

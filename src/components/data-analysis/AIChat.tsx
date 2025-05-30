@@ -26,7 +26,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'I\'m your AI data analyst powered by GPT-4.1. Upload your data and ask me anything about it - I can help identify trends, analyze patterns, and provide meaningful insights tailored for executives and sales leaders.'
+      content: 'I\'m your AI data analyst powered by GPT-4o. Upload your data and ask me anything about it - I can help identify trends, analyze patterns, and provide meaningful insights tailored for executives and sales leaders.'
     }
   ]);
   const [input, setInput] = useState('');
@@ -34,7 +34,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isKeyConfigured, setIsKeyConfigured] = useState(false);
   const [isCheckingKey, setIsCheckingKey] = useState(true);
-  const [selectedModel, setSelectedModel] = useState('o3-mini-2025-01-31');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [largeDataWarning, setLargeDataWarning] = useState(false);
@@ -43,8 +43,9 @@ const AIChat: React.FC<AIChatProps> = ({
 
   // Available models
   const models = [
-    { id: 'o3-mini-2025-01-31', name: 'o3-mini (2025-01-31)', description: 'Faster, more efficient model for business analyses' },
-    { id: 'gpt-4.1', name: 'GPT-4.1', description: 'Powerful model with comprehensive business analysis capabilities' }
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast and cost-effective for most business analyses (Recommended)' },
+    { id: 'gpt-4o', name: 'GPT-4o', description: 'Most capable model for complex data analysis and insights' },
+    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Powerful model with large context window' }
   ];
 
   // Check if API key is configured

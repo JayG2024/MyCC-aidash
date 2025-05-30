@@ -23,7 +23,6 @@ const DataAnalysis: React.FC = () => {
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
   const [datasetInfo, setDatasetInfo] = useState<{ rows: number, columns: number } | null>(null);
-  const [isMockData, setIsMockData] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
   useEffect(() => {
@@ -60,14 +59,6 @@ const DataAnalysis: React.FC = () => {
   }, []);
 
   const handleDataParsed = async (data: any[], headers: string[], originalFileName?: string) => {
-    console.log('Data parsed successfully:', { 
-      rows: data.length, 
-      columns: headers.length, 
-      headers,
-      sampleData: data.slice(0, 3),
-      originalFileName 
-    });
-    
     setCsvData(data);
     setHeaders(headers);
     setFileName(originalFileName || 'Uploaded File');
@@ -83,10 +74,8 @@ const DataAnalysis: React.FC = () => {
     
     try {
       await saveCSVData(data, headers, originalFileName || 'Uploaded File');
-      console.log('Data saved successfully to localStorage');
     } catch (error) {
       console.error('Error saving data:', error);
-      // Handle error (could show a notification to the user)
     }
   };
 
@@ -164,12 +153,6 @@ const DataAnalysis: React.FC = () => {
                 <p className="text-gray-600 mt-1">
                   Upload your sales, marketing, and operations data to uncover valuable business insights
                 </p>
-                {isMockData && (
-                  <div className="mt-2 inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                    <Info size={14} className="mr-1" />
-                    Demo Mode: Using sample data
-                  </div>
-                )}
               </div>
               
               <div className="flex flex-wrap gap-3">
@@ -323,15 +306,7 @@ const DataAnalysis: React.FC = () => {
                   </div>
                 </div>
               ) : csvData && csvData.length > 0 && headers && headers.length > 0 ? (
-                <>
-                  {console.log('Rendering DataTable with:', { 
-                    dataLength: csvData.length, 
-                    headers: headers.length,
-                    fileName: fileName,
-                    firstRow: csvData[0]
-                  })}
-                  <DataTable data={csvData} headers={headers} />
-                </>
+                <DataTable data={csvData} headers={headers} />
               ) : (
                 <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex items-center justify-center">
                   <div className="text-center">

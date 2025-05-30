@@ -97,11 +97,6 @@ const DataUpload: React.FC<DataUploadProps> = ({
           }
         },
         complete: (results) => {
-          console.log('CSV parsing complete:', {
-            rows: results.data.length,
-            headers: results.meta.fields,
-            errors: results.errors
-          });
           handleParseComplete(results.data, results.meta.fields || [], results.errors);
         },
         error: (error) => {
@@ -167,11 +162,6 @@ const DataUpload: React.FC<DataUploadProps> = ({
         });
         
         setProgress(100);
-        console.log('Excel parsing complete:', {
-          rows: dataRows.length,
-          headers: headers,
-          sampleData: dataRows.slice(0, 2)
-        });
         handleParseComplete(dataRows, headers, []);
         
       } catch (error) {

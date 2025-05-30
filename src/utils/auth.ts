@@ -14,21 +14,35 @@ export interface User {
   avatar?: string;
 }
 
-// Mock users for demonstration
-const MOCK_USERS = [
+// Production user accounts for MyComputerCareer
+const AUTHORIZED_USERS = [
   {
-    id: 'user1',
+    id: 'admin1',
     email: 'admin@mycomputercareer.edu',
-    password: 'admin123',
-    name: 'Admin User',
+    password: 'MyCC2024!Admin',
+    name: 'System Administrator',
     role: 'admin',
   },
   {
-    id: 'user2',
-    email: 'user@mycomputercareer.edu',
-    password: 'user123',
-    name: 'Jaydus Martin',
+    id: 'marketing1',
+    email: 'marketing@mycomputercareer.edu',
+    password: 'MyCC2024!Marketing',
+    name: 'Marketing Director',
     role: 'marketing',
+  },
+  {
+    id: 'sales1',
+    email: 'sales@mycomputercareer.edu',
+    password: 'MyCC2024!Sales',
+    name: 'Sales Director',
+    role: 'sales',
+  },
+  {
+    id: 'exec1',
+    email: 'executive@mycomputercareer.edu',
+    password: 'MyCC2024!Executive',
+    name: 'Executive Team',
+    role: 'executive',
   }
 ];
 
@@ -40,7 +54,7 @@ export const login = async (email: string, password: string): Promise<User | nul
     // Simulate network latency
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    const user = MOCK_USERS.find(
+    const user = AUTHORIZED_USERS.find(
       u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
     );
     

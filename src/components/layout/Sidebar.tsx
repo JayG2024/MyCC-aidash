@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  PenSquare, X, Settings, UserCircle, LogOut, Database, Menu
+  X, Settings, UserCircle, LogOut, Database, Menu, BarChart3, FileText, Users, Bot
 } from 'lucide-react';
 import { logout } from '../../utils/auth';
 
@@ -85,20 +85,56 @@ const Sidebar: React.FC = () => {
           {/* Links */}
           <nav className="flex-1 pt-4 pb-4 overflow-y-auto">
             <div className="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase">
-              Main
+              Dashboard
+            </div>
+            <SidebarLink
+              to="/analytics"
+              icon={<BarChart3 size={20} />}
+              label="Analytics Overview"
+              isActive={isActive('/analytics')}
+              onClick={closeMobileMenu}
+            />
+            
+            <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
+              Data Analysis
             </div>
             <SidebarLink
               to="/data-analysis"
               icon={<Database size={20} />}
-              label="Data Analysis"
+              label="Data Upload & Analysis"
               isActive={isActive('/data-analysis')}
               onClick={closeMobileMenu}
             />
             <SidebarLink
               to="/gravity-forms"
-              icon={<Database size={20} />}
-              label="Gravity Forms"
+              icon={<FileText size={20} />}
+              label="Gravity Forms Data"
               isActive={isActive('/gravity-forms')}
+              onClick={closeMobileMenu}
+            />
+            
+            <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
+              Business Intelligence
+            </div>
+            <SidebarLink
+              to="/leads"
+              icon={<Users size={20} />}
+              label="Lead Management"
+              isActive={isActive('/leads')}
+              onClick={closeMobileMenu}
+            />
+            <SidebarLink
+              to="/reports"
+              icon={<FileText size={20} />}
+              label="Reports"
+              isActive={isActive('/reports')}
+              onClick={closeMobileMenu}
+            />
+            <SidebarLink
+              to="/assistants"
+              icon={<Bot size={20} />}
+              label="AI Assistants"
+              isActive={isActive('/assistants')}
               onClick={closeMobileMenu}
             />
 
