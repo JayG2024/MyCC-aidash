@@ -41,11 +41,10 @@ const AIChat: React.FC<AIChatProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
-  // Available models
+  // Available models - optimized for large dataset analysis
   const models = [
     { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast and cost-effective for most business analyses (Recommended)' },
-    { id: 'gpt-4o', name: 'GPT-4o', description: 'Most capable model for complex data analysis and insights' },
-    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Powerful model with large context window' }
+    { id: 'gpt-4o', name: 'GPT-4o', description: 'Most capable model for complex data analysis and insights' }
   ];
 
   // Check if API key is configured
