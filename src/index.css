@@ -5,29 +5,34 @@
 /* Custom styles for AI response tables */
 .ai-response table {
   width: 100%;
-  margin: 1rem 0;
+  margin: 1.5rem 0;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.875rem;
   overflow: hidden;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: table !important;
+  table-layout: auto !important;
 }
 
 .ai-response th {
   background-color: #f3f4f6;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.25rem !important;
   text-align: left;
   font-weight: 600;
   color: #374151;
   border-bottom: 1px solid #e5e7eb;
   white-space: nowrap;
+  min-width: 120px;
 }
 
 .ai-response td {
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.25rem !important;
   border-bottom: 1px solid #e5e7eb;
   color: #4b5563;
+  white-space: normal;
+  min-width: 120px;
 }
 
 .ai-response tr:last-child td {
@@ -85,4 +90,34 @@
 /* Ensure tables are scrollable on small screens */
 .ai-response {
   overflow-x: auto;
+}
+
+/* Table wrapper for horizontal scroll */
+.ai-response .table-wrapper {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+  .ai-response table {
+    font-size: 0.8rem;
+  }
+  
+  .ai-response th,
+  .ai-response td {
+    padding: 0.5rem 0.75rem !important;
+    min-width: 100px;
+  }
+}
+
+/* Fix for markdown table alignment */
+.ai-response table thead tr th:nth-child(2),
+.ai-response table tbody tr td:nth-child(2) {
+  text-align: center;
+}
+
+.ai-response table thead tr th:nth-child(3),
+.ai-response table tbody tr td:nth-child(3) {
+  text-align: right;
 }

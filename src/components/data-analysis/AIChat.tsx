@@ -159,8 +159,38 @@ const AIChat: React.FC<AIChatProps> = ({
   // Custom renderer for markdown content with better table styling
   const MarkdownRenderer = ({ content }: { content: string }) => {
     return (
-      <div className="markdown-content ai-response">
-        <ReactMarkdown>
+      <div className="markdown-content ai-response prose prose-sm max-w-none">
+        <ReactMarkdown
+          components={{
+            table: ({ children }) => (
+              <div className="table-wrapper overflow-x-auto my-4">
+                <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
+                  {children}
+                </table>
+              </div>
+            ),
+            thead: ({ children }) => (
+              <thead className="bg-gray-50">
+                {children}
+              </thead>
+            ),
+            tbody: ({ children }) => (
+              <tbody className="bg-white divide-y divide-gray-200">
+                {children}
+              </tbody>
+            ),
+            th: ({ children }) => (
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                {children}
+              </th>
+            ),
+            td: ({ children }) => (
+              <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-100">
+                {children}
+              </td>
+            ),
+          }}
+        >
           {content}
         </ReactMarkdown>
       </div>

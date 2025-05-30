@@ -310,6 +310,53 @@ function calculateCorrelation(pairs) {
     const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
     return denominator === 0 ? 0 : numerator / denominator;
 }
+// Admin notification endpoint for new user registrations
+app.post('/notify-admin', async (req, res) => {
+    try {
+        const { name, email, role, department, adminEmail } = req.body;
+        // In a real app, you'd use a service like SendGrid, Nodemailer, or Firebase Extensions
+        // For now, we'll log the notification and store it in Firestore
+        console.log('New user registration pending approval:', {
+            name,
+            email,
+            role,
+            department,
+            adminEmail
+        });
+        // Store notification in Firestore for admin to see
+        await admin.firestore().collection('admin_notifications').add({
+            type: 'new_user_registration',
+            data: {
+                name,
+                email,
+                role,
+                department
+            },
+            adminEmail,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            read: false
+        });
+        // TODO: Integrate with email service to send actual email to matthew.neitzel@mycomputercareer.edu
+        // Example with SendGrid:
+        // await sendEmail({
+        //   to: adminEmail,
+        //   subject: 'New User Registration Request - MyCC AI Dashboard',
+        //   html: `
+        //     <h3>New User Registration Request</h3>
+        //     <p><strong>Name:</strong> ${name}</p>
+        //     <p><strong>Email:</strong> ${email}</p>
+        //     <p><strong>Role:</strong> ${role}</p>
+        //     <p><strong>Department:</strong> ${department}</p>
+        //     <p>Please log into the admin panel to approve or deny this request.</p>
+        //   `
+        // });
+        res.json({ success: true, message: 'Admin notification sent' });
+    }
+    catch (error) {
+        console.error('Error sending admin notification:', error);
+        res.status(500).json({ error: 'Failed to send admin notification' });
+    }
+});
 // Export the Express app as a Firebase Function with extended timeout
 exports.api = (0, https_1.onRequest)({
     timeoutSeconds: 540,
