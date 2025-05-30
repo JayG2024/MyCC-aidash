@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, AlertTriangle, Eye, EyeOff, LogIn } from 'lucide-react';
-import { login, isAuthenticated } from '../utils/auth';
+import { login, isAuthenticated } from '../utils/firebase-auth';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');

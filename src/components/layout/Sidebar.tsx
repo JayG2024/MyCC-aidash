@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   X, Settings, UserCircle, LogOut, Database, Menu, BarChart3, FileText, Users, Bot
 } from 'lucide-react';
-import { logout } from '../../utils/auth';
+import { logout } from '../../utils/firebase-auth';
 
 interface SidebarLinkProps {
   to: string;

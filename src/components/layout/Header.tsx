@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Search, LogOut } from 'lucide-react';
-import { getCurrentUser, logout } from '../../utils/auth';
+import { getCurrentUser, logout } from '../../utils/firebase-auth';
 import { useNavigate } from 'react-router-dom';
-import type { User } from '../../utils/auth';
+import type { User } from '../../utils/firebase-auth';
 
 interface HeaderProps {
   title: string;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { isAuthenticated } from '../../utils/auth';
+import { isAuthenticated } from '../../utils/firebase-auth';
 
 interface AuthWrapperProps {
   children: React.ReactNode;
