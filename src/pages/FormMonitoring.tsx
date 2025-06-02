@@ -1,0 +1,32 @@
+import React from 'react';
+import Layout from '../components/layout/Layout';
+import FormHealthMonitor from '../components/forms/FormHealthMonitor';
+
+const FormMonitoring: React.FC = () => {
+  return (
+    <Layout title="Form Health Monitoring">
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Form Health Monitoring
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Real-time monitoring of all Gravity Forms to prevent revenue loss
+              </p>
+              <div className="mt-3 text-sm text-gray-500">
+                <span className="font-medium">Revenue Protection:</span> Up to $30,000/hour | 
+                <span className="font-medium ml-2">Update Frequency:</span> Every 5 minutes
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <FormHealthMonitor />
+      </div>
+    </Layout>
+  );
+};
+
+export default FormMonitoring;
