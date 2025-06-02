@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, Clock, TrendingUp, Bell, Zap, RefreshCw } from 'lucide-react';
+import FormDetailModal from './FormDetailModal';
 
 interface FormHealth {
   id: string;
@@ -26,42 +27,98 @@ const FormHealthMonitor: React.FC = () => {
   const [alerts, setAlerts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [selectedForm, setSelectedForm] = useState<FormHealth | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Mock data for demonstration
+  // Mock data based on actual MyCC Gravity Forms
   useEffect(() => {
-    const mockData: FormHealth[] = [
-      {
-        id: '1',
-        title: 'Contact Form - Main Page',
-        status: 'healthy',
-        lastSubmission: '2 minutes ago',
-        submissionsToday: 23,
-        avgSubmissionsPerHour: 12,
-        errorRate: 0.5,
-        responseTime: 1200
-      },
-      {
-        id: '2',
-        title: 'Lead Generation Form',
-        status: 'warning',
-        lastSubmission: '45 minutes ago',
-        submissionsToday: 8,
-        avgSubmissionsPerHour: 15,
-        errorRate: 2.1,
-        responseTime: 2800
-      },
-      {
-        id: '3',
-        title: 'Newsletter Signup',
-        status: 'critical',
-        lastSubmission: '3 hours ago',
-        submissionsToday: 1,
-        avgSubmissionsPerHour: 25,
-        errorRate: 15.3,
-        responseTime: 8900
-      }
-    ];
-    setFormsHealth(mockData);
+    const generateMockData = (): FormHealth[] => {
+      const realForms = [
+        { id: '69', title: 'AA Referral Form', entries: 323, views: 1316, conversion: 24.5 },
+        { id: '42', title: 'AFF Email Form', entries: 0, views: 1285, conversion: 0 },
+        { id: '74', title: 'AI Form', entries: 24, views: 6625, conversion: 0.4 },
+        { id: '67', title: 'Blog News Form', entries: 1923, views: 774617, conversion: 0.2 },
+        { id: '58', title: 'Counseling Services Disclosure Policy Form', entries: 0, views: 530, conversion: 0 },
+        { id: '81', title: 'Cyber Warrior Program Converze Form', entries: 0, views: 18562, conversion: 0 },
+        { id: '68', title: 'Cyber Warrior Program Form', entries: 10731, views: 1116148, conversion: 1 },
+        { id: '80', title: 'Cyber Warrior Program Intero Form', entries: 3, views: 99649, conversion: 0 },
+        { id: '72', title: 'Cybersecurity Form', entries: 105, views: 12582, conversion: 0.8 },
+        { id: '66', title: 'Dear CEO Form', entries: 0, views: 878, conversion: 0 },
+        { id: '59', title: 'Dear Tony Form', entries: 13, views: 1552, conversion: 0.8 },
+        { id: '77', title: 'Dreambound form', entries: 0, views: 0, conversion: 0 },
+        { id: '44', title: 'Evaluation Questions', entries: 6756, views: 77709, conversion: 8.7 },
+        { id: '71', title: 'Event - MIC Vegas Form', entries: 0, views: 470, conversion: 0 },
+        { id: '75', title: 'Event - Military Career Fairs Form', entries: 152, views: 3064, conversion: 5 },
+        { id: '62', title: 'Free Career Evaluation Form', entries: 10435, views: 787919, conversion: 1.3 },
+        { id: '54', title: 'Google PPC - Internet Ad Form', entries: 167, views: 48094, conversion: 0.3 },
+        { id: '61', title: 'Military Form', entries: 239, views: 16170, conversion: 1.5 },
+        { id: '70', title: 'Nellis Walk In Form', entries: 0, views: 499, conversion: 0 },
+        { id: '73', title: 'Network Admin Form', entries: 7, views: 5801, conversion: 0.1 },
+        { id: '76', title: 'Recruit Military Form', entries: 263, views: 5498, conversion: 4.8 },
+        { id: '79', title: 'Request Information 529fb Form', entries: 0, views: 13889, conversion: 0 },
+        { id: '78', title: 'Request Information 529g Form', entries: 0, views: 14327, conversion: 0 },
+        { id: '60', title: 'Request Information Form', entries: 4477, views: 285600, conversion: 1.6 },
+        { id: '63', title: 'Salesforce Training Form', entries: 0, views: 1753, conversion: 0 },
+        { id: '55', title: 'Scarlett Scholarship Form', entries: 15, views: 1769, conversion: 0.8 },
+        { id: '45', title: 'Schedule Campus Tour Form', entries: 28, views: 5474, conversion: 0.5 },
+        { id: '53', title: 'Skillbridge Form', entries: 4299, views: 456115, conversion: 0.9 },
+        { id: '82', title: 'Skillbridge Intero Form', entries: 4, views: 89845, conversion: 0 },
+        { id: '47', title: 'Social - Facebook Ad Form', entries: 106, views: 57273, conversion: 0.2 },
+        { id: '46', title: 'Social - Facebook Form', entries: 1, views: 1196, conversion: 0.1 },
+        { id: '52', title: 'Social - Google My Business Form', entries: 0, views: 1193, conversion: 0 },
+        { id: '49', title: 'Social - Instagram Ad Form', entries: 0, views: 644, conversion: 0 },
+        { id: '48', title: 'Social - Instagram Form', entries: 5, views: 1960, conversion: 0.3 },
+        { id: '41', title: 'Social - LinkedIn Form', entries: 0, views: 1497, conversion: 0 },
+        { id: '64', title: 'Social - Reddit Form', entries: 0, views: 693, conversion: 0 },
+        { id: '65', title: 'Social - Tiktok Form', entries: 581, views: 476125, conversion: 0.1 },
+        { id: '51', title: 'Social - Twitter Form', entries: 0, views: 489, conversion: 0 },
+        { id: '50', title: 'Social - YouTube Form', entries: 1, views: 731, conversion: 0.1 },
+        { id: '57', title: 'VA Counselors Form', entries: 1205, views: 660, conversion: 182.6 },
+        { id: '56', title: 'Veteran Advocates Form', entries: 2478, views: 656, conversion: 377.7 },
+        { id: '43', title: 'We Are IT Form', entries: 45, views: 2340, conversion: 1.9 }
+      ];
+
+      return realForms.map(form => {
+        // Simulate different health statuses based on real patterns
+        let status: FormHealth['status'] = 'healthy';
+        let lastSubmission = '2 minutes ago';
+        let errorRate = Math.random() * 2; // 0-2% for healthy forms
+        
+        // Forms with 0 entries are likely problematic
+        if (form.entries === 0 && form.views > 500) {
+          status = 'critical';
+          lastSubmission = Math.random() > 0.5 ? 'Never' : '5+ days ago';
+          errorRate = 15 + Math.random() * 10; // 15-25% error rate
+        } else if (form.entries < 5 && form.views > 1000) {
+          status = 'warning';
+          lastSubmission = '2-6 hours ago';
+          errorRate = 5 + Math.random() * 5; // 5-10% error rate
+        } else if (form.entries > 0) {
+          // Recent activity for forms with entries
+          const timeSinceSubmission = Math.random() * 120; // 0-120 minutes
+          if (timeSinceSubmission < 30) {
+            lastSubmission = `${Math.floor(timeSinceSubmission)} minutes ago`;
+          } else if (timeSinceSubmission < 60) {
+            lastSubmission = '1 hour ago';
+          } else {
+            lastSubmission = `${Math.floor(timeSinceSubmission / 60)} hours ago`;
+          }
+        }
+
+        return {
+          id: form.id,
+          title: form.title,
+          status,
+          lastSubmission,
+          submissionsToday: Math.floor(form.entries * 0.1), // Simulate daily submissions
+          avgSubmissionsPerHour: Math.max(1, Math.floor(form.entries / 30)), // Rough hourly estimate
+          errorRate: parseFloat(errorRate.toFixed(1)),
+          responseTime: 800 + Math.random() * 2000 // 800-2800ms
+        };
+      });
+    };
+
+    setFormsHealth(generateMockData());
     setLoading(false);
   }, []);
 
@@ -85,45 +142,36 @@ const FormHealthMonitor: React.FC = () => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+  const totalSubmissionsToday = formsHealth.reduce((sum, form) => sum + form.submissionsToday, 0);
+  const avgResponseTime = formsHealth.reduce((sum, form) => sum + form.responseTime, 0) / formsHealth.length;
+  const criticalFormsCount = formsHealth.filter(form => form.status === 'critical' || form.status === 'offline').length;
+
+  const handleViewDetails = (form: FormHealth) => {
+    setSelectedForm(form);
+    setIsModalOpen(true);
   };
 
-  const calculateHourlyLoss = (avgSubmissionsPerHour: number) => {
-    // Assuming average lead value of $75
-    const avgLeadValue = 75;
-    return avgSubmissionsPerHour * avgLeadValue;
+  const handleDebugForm = (form: FormHealth) => {
+    setSelectedForm(form);
+    setIsModalOpen(true);
   };
-
-  const totalHourlyRevenue = formsHealth.reduce((sum, form) => {
-    return sum + calculateHourlyLoss(form.avgSubmissionsPerHour);
-  }, 0);
-
-  const criticalFormsLoss = formsHealth
-    .filter(form => form.status === 'critical' || form.status === 'offline')
-    .reduce((sum, form) => sum + calculateHourlyLoss(form.avgSubmissionsPerHour), 0);
 
   return (
     <div className="space-y-6">
-      {/* Revenue Impact Alert */}
-      {criticalFormsLoss > 0 && (
+      {/* Critical Issues Alert */}
+      {criticalFormsCount > 0 && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
           <div className="flex items-center">
             <Zap className="text-red-500 mr-3" size={24} />
             <div>
               <h3 className="text-lg font-bold text-red-800">
-                Revenue Impact Alert
+                Critical Form Issues Detected
               </h3>
               <p className="text-red-700">
-                <span className="font-bold">{formatCurrency(criticalFormsLoss)}/hour</span> potential revenue loss from failed forms
+                <span className="font-bold">{criticalFormsCount} forms</span> require immediate attention
               </p>
               <p className="text-sm text-red-600 mt-1">
-                Total hourly potential: {formatCurrency(totalHourlyRevenue)}
+                Forms may not be accepting submissions or have processing errors
               </p>
             </div>
           </div>
@@ -137,6 +185,7 @@ const FormHealthMonitor: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Total Forms</p>
               <p className="text-2xl font-bold">{formsHealth.length}</p>
+              <p className="text-xs text-gray-500 mt-1">{totalSubmissionsToday} submissions today</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-full">
               <RefreshCw className="text-blue-600" size={24} />
@@ -175,9 +224,9 @@ const FormHealthMonitor: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Hourly Revenue</p>
+              <p className="text-sm text-gray-600">Avg Response Time</p>
               <p className="text-2xl font-bold text-blue-600">
-                {formatCurrency(totalHourlyRevenue)}
+                {Math.round(avgResponseTime)}ms
               </p>
             </div>
             <div className="p-3 bg-blue-100 rounded-full">
@@ -224,7 +273,10 @@ const FormHealthMonitor: React.FC = () => {
                   Error Rate
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Revenue Impact
+                  Response Time
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -264,12 +316,28 @@ const FormHealthMonitor: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {formatCurrency(calculateHourlyLoss(form.avgSubmissionsPerHour))}/hr
+                      {form.responseTime}ms
                     </div>
-                    {(form.status === 'critical' || form.status === 'offline') && (
+                    {form.responseTime > 2000 && (
                       <div className="text-xs text-red-600 font-medium">
-                        REVENUE AT RISK
+                        SLOW
                       </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <button 
+                      onClick={() => handleViewDetails(form)}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3"
+                    >
+                      View Details
+                    </button>
+                    {(form.status === 'critical' || form.status === 'warning') && (
+                      <button 
+                        onClick={() => handleDebugForm(form)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Debug
+                      </button>
                     )}
                   </td>
                 </tr>
@@ -278,6 +346,18 @@ const FormHealthMonitor: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Form Detail Modal */}
+      {selectedForm && (
+        <FormDetailModal
+          form={selectedForm}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedForm(null);
+          }}
+        />
+      )}
     </div>
   );
 };
