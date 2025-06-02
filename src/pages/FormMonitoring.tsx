@@ -13,11 +13,11 @@ const FormMonitoring: React.FC = () => {
                 Form Health Monitoring
               </h1>
               <p className="text-gray-600 mt-1">
-                Real-time monitoring of all Gravity Forms to prevent revenue loss
+                Real-time monitoring of all Gravity Forms for technical issues and performance
               </p>
               <div className="mt-3 text-sm text-gray-500">
-                <span className="font-medium">Revenue Protection:</span> Up to $30,000/hour | 
-                <span className="font-medium ml-2">Update Frequency:</span> Every 5 minutes
+                <span className="font-medium">Update Frequency:</span> Every 5 minutes | 
+                <span className="font-medium ml-2">Forms Monitored:</span> 42 active forms
               </div>
             </div>
           </div>
