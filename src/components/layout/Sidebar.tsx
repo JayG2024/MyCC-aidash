@@ -120,6 +120,16 @@ const Sidebar: React.FC = () => {
               onClick={closeMobileMenu}
             />
             
+            <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
+              Settings
+            </div>
+            <SidebarLink
+              to="/notification-settings"
+              icon={<Settings size={20} />}
+              label="Notification Settings"
+              isActive={isActive('/notification-settings')}
+              onClick={closeMobileMenu}
+            />
 
             <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
               Account

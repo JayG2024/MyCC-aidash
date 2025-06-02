@@ -9,6 +9,7 @@ import UserProfile from './pages/UserProfile';
 import DataAnalysis from './pages/DataAnalysis';
 import GravityFormsData from './pages/GravityFormsData';
 import FormMonitoring from './pages/FormMonitoring';
+import NotificationSettingsPage from './pages/NotificationSettings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AuthWrapper from './components/auth/AuthWrapper';
@@ -30,6 +31,7 @@ function App() {
           <Route path="/content-library" element={<AIAssistants />} />
           <Route path="/gravity-forms" element={<GravityFormsData />} />
           <Route path="/form-monitoring" element={<FormMonitoring />} />
+          <Route path="/notification-settings" element={<NotificationSettingsPage />} />
           {/* Catch-all route for 404 */}
           <Route path="*" element={<Analytics />} />
         </Routes>

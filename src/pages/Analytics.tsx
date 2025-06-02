@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import ErrorBoundary from '../components/ErrorBoundary';
+import SubmissionTracker from '../components/dashboard/SubmissionTracker';
 import { 
   Calendar, ChevronDown, Download, ExternalLink, RefreshCw,
   BarChart2, Database, TrendingUp, Users, MessageSquare,
@@ -262,6 +263,9 @@ const Analytics: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {/* Form Submission Tracker - PRIORITY WIDGET */}
+          <SubmissionTracker />
           
           {/* AI Performance and Data Processing */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
