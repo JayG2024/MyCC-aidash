@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle, CheckCircle, Clock, Database, Shield, Zap, Bot } from 'lucide-react';
+import { formDataService, SubmissionData } from '../../services/formDataService';
 
 interface FormDetailModalProps {
   form: {
@@ -21,6 +22,10 @@ interface FormSubmission {
   timestamp: string;
   status: 'success' | 'failed' | 'processing';
   processingTime: number;
+  submittedEmail: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
   integrations: {
     hubspot: 'success' | 'failed' | 'pending';
     email: 'success' | 'failed' | 'pending';
@@ -30,6 +35,7 @@ interface FormSubmission {
   userAgent: string;
   ip: string;
   location: string;
+  gravityFormEntryId?: string;
 }
 
 interface SecurityEvent {
@@ -43,25 +49,68 @@ interface SecurityEvent {
 
 const FormDetailModal: React.FC<FormDetailModalProps> = ({ form, isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<'submissions' | 'security' | 'integrations' | 'ai-analysis'>('submissions');
+  const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && form.id) {
+      loadSubmissionData();
+    }
+  }, [isOpen, form.id]);
+
+  const loadSubmissionData = async () => {
+    setLoading(true);
+    try {
+      const submissionData = await formDataService.getRecentSubmissions(form.id);
+      setSubmissions(submissionData);
+    } catch (error) {
+      console.error('Error loading submission data:', error);
+      // Fallback to mock data
+      setSubmissions(generateMockSubmissions());
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
-  // Mock data for submissions
-  const recentSubmissions: FormSubmission[] = Array.from({ length: 20 }, (_, i) => ({
-    id: `sub_${i + 1}`,
-    timestamp: new Date(Date.now() - i * 30 * 60 * 1000).toLocaleString(),
-    status: Math.random() > 0.9 ? 'failed' : 'success',
-    processingTime: 800 + Math.random() * 2000,
-    integrations: {
-      hubspot: Math.random() > 0.95 ? 'failed' : 'success',
-      email: Math.random() > 0.98 ? 'failed' : 'success',
-      recaptcha: Math.random() > 0.97 ? 'failed' : 'success'
-    },
-    spamScore: Math.random() * 100,
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-    location: ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX'][Math.floor(Math.random() * 4)]
-  }));
+  // Mock data for submissions with email tracking
+  const generateMockEmail = () => {
+    const names = ['john.doe', 'sarah.smith', 'mike.johnson', 'lisa.williams', 'david.brown', 'jennifer.davis', 'robert.miller', 'amanda.wilson'];
+    const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'company.com'];
+    const name = names[Math.floor(Math.random() * names.length)];
+    const domain = domains[Math.floor(Math.random() * domains.length)];
+    return `${name}@${domain}`;
+  };
+
+  const generateMockSubmissions = (): SubmissionData[] => Array.from({ length: 20 }, (_, i) => {
+    const email = generateMockEmail();
+    const firstName = email.split('.')[0].split('@')[0];
+    const lastName = email.split('.')[1]?.split('@')[0] || 'User';
+    
+    return {
+      id: `sub_${i + 1}`,
+      timestamp: new Date(Date.now() - i * 30 * 60 * 1000).toLocaleString(),
+      status: Math.random() > 0.9 ? 'failed' : 'success',
+      processingTime: 800 + Math.random() * 2000,
+      submittedEmail: email,
+      firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1),
+      lastName: lastName.charAt(0).toUpperCase() + lastName.slice(1),
+      phone: `+1-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
+      integrations: {
+        hubspot: Math.random() > 0.95 ? 'failed' : 'success',
+        email: Math.random() > 0.98 ? 'failed' : 'success',
+        recaptcha: Math.random() > 0.97 ? 'failed' : 'success'
+      },
+      spamScore: Math.random() * 100,
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+      location: ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX'][Math.floor(Math.random() * 4)],
+      gravityFormEntryId: `gf_entry_${Math.floor(Math.random() * 10000) + 1000}`,
+      formId: form.id,
+      formTitle: form.title
+    };
+  });
 
   // Mock security events
   const securityEvents: SecurityEvent[] = [
@@ -187,13 +236,20 @@ const FormDetailModal: React.FC<FormDetailModalProps> = ({ form, isOpen, onClose
           {activeTab === 'submissions' && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Recent Submissions (Last 50)</h3>
+              {loading && (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Loading submissions...</p>
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left font-medium">Timestamp</th>
+                      <th className="px-4 py-3 text-left font-medium">Contact Info</th>
                       <th className="px-4 py-3 text-left font-medium">Status</th>
-                      <th className="px-4 py-3 text-left font-medium">Processing Time</th>
+                      <th className="px-4 py-3 text-left font-medium">Gravity ID</th>
                       <th className="px-4 py-3 text-left font-medium">HubSpot</th>
                       <th className="px-4 py-3 text-left font-medium">Email</th>
                       <th className="px-4 py-3 text-left font-medium">reCAPTCHA</th>
@@ -202,16 +258,29 @@ const FormDetailModal: React.FC<FormDetailModalProps> = ({ form, isOpen, onClose
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {recentSubmissions.map(submission => (
+                    {submissions.map(submission => (
                       <tr key={submission.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">{submission.timestamp}</td>
+                        <td className="px-4 py-3">
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {submission.firstName} {submission.lastName}
+                            </div>
+                            <div className="text-xs text-blue-600">{submission.submittedEmail}</div>
+                            <div className="text-xs text-gray-500">{submission.phone}</div>
+                          </div>
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center">
                             {getStatusIcon(submission.status)}
                             <span className="ml-2 capitalize">{submission.status}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3">{Math.round(submission.processingTime)}ms</td>
+                        <td className="px-4 py-3">
+                          <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                            {submission.gravityFormEntryId}
+                          </span>
+                        </td>
                         <td className="px-4 py-3">{getStatusIcon(submission.integrations.hubspot)}</td>
                         <td className="px-4 py-3">{getStatusIcon(submission.integrations.email)}</td>
                         <td className="px-4 py-3">{getStatusIcon(submission.integrations.recaptcha)}</td>

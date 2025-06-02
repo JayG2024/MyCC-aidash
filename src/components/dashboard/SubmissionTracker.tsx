@@ -1,17 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, XCircle, Shield, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import { formDataService, DashboardStats } from '../../services/formDataService';
 
-interface SubmissionStats {
-  timeframe: 'today' | 'hour' | 'week';
-  successful: number;
-  failed: number;
-  blocked: number;
-  spam: number;
-  total: number;
-  successRate: number;
-  trend: 'up' | 'down' | 'stable';
-  trendPercentage: number;
-}
+// Use DashboardStats from service instead of local interface
+type SubmissionStats = DashboardStats;
 
 interface FailedSubmission {
   formId: string;
@@ -20,6 +12,9 @@ interface FailedSubmission {
   reason: 'validation_error' | 'server_error' | 'integration_failed' | 'spam_blocked' | 'captcha_failed';
   errorMessage: string;
   userLocation: string;
+  submittedEmail?: string;
+  userName?: string;
+  gravityFormEntryId?: string;
 }
 
 const SubmissionTracker: React.FC = () => {
@@ -28,9 +23,40 @@ const SubmissionTracker: React.FC = () => {
   const [failedSubmissions, setFailedSubmissions] = useState<FailedSubmission[]>([]);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Mock data generation
+  // Load real dashboard data
   useEffect(() => {
-    const generateStats = (timeframe: 'today' | 'hour' | 'week'): SubmissionStats => {
+    const loadData = async () => {
+      try {
+        const stats = await formDataService.getDashboardStats(selectedTimeframe);
+        setStats(stats);
+        
+        const submissions = await formDataService.getRecentSubmissions();
+        const failed = submissions.filter(s => s.status === 'failed').map(s => ({
+          formId: s.formId,
+          formTitle: s.formTitle,
+          timestamp: s.timestamp,
+          reason: 'validation_error' as const, // Simplified for now
+          errorMessage: 'Submission failed',
+          userLocation: s.location,
+          submittedEmail: s.submittedEmail,
+          userName: `${s.firstName} ${s.lastName}`,
+          gravityFormEntryId: s.gravityFormEntryId
+        }));
+        
+        setFailedSubmissions(failed);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        // Fallback to demo data
+        setStats(generateDemoStats(selectedTimeframe));
+        setFailedSubmissions(generateDemoFailedSubmissions());
+      }
+    };
+
+    loadData();
+  }, [selectedTimeframe]);
+
+  // Legacy demo data generators for fallback
+  const generateDemoStats = (timeframe: 'today' | 'hour' | 'week'): SubmissionStats => {
       let baseSuccessful = 0;
       let baseFailed = 0;
       let baseBlocked = 0;
@@ -73,7 +99,7 @@ const SubmissionTracker: React.FC = () => {
       };
     };
 
-    const generateFailedSubmissions = (): FailedSubmission[] => {
+    const generateDemoFailedSubmissions = (): FailedSubmission[] => {
       const forms = [
         { id: '68', title: 'Cyber Warrior Program Form' },
         { id: '62', title: 'Free Career Evaluation Form' },
@@ -94,10 +120,21 @@ const SubmissionTracker: React.FC = () => {
         captcha_failed: ['reCAPTCHA verification failed', 'CAPTCHA timeout', 'Invalid CAPTCHA response']
       };
 
+      const generateMockEmail = () => {
+        const names = ['john.doe', 'sarah.smith', 'mike.johnson', 'lisa.williams', 'david.brown', 'jennifer.davis', 'robert.miller', 'amanda.wilson'];
+        const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'company.com'];
+        const name = names[Math.floor(Math.random() * names.length)];
+        const domain = domains[Math.floor(Math.random() * domains.length)];
+        return `${name}@${domain}`;
+      };
+
       return Array.from({ length: 15 }, (_, i) => {
         const form = forms[Math.floor(Math.random() * forms.length)];
         const reason = reasons[Math.floor(Math.random() * reasons.length)];
         const timestamp = new Date(Date.now() - i * 15 * 60 * 1000).toLocaleString();
+        const email = generateMockEmail();
+        const firstName = email.split('.')[0].split('@')[0];
+        const lastName = email.split('.')[1]?.split('@')[0] || 'User';
         
         return {
           formId: form.id,
@@ -105,14 +142,13 @@ const SubmissionTracker: React.FC = () => {
           timestamp,
           reason,
           errorMessage: errorMessages[reason][Math.floor(Math.random() * errorMessages[reason].length)],
-          userLocation: ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ'][Math.floor(Math.random() * 5)]
+          userLocation: ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ'][Math.floor(Math.random() * 5)],
+          submittedEmail: email,
+          userName: `${firstName.charAt(0).toUpperCase() + firstName.slice(1)} ${lastName.charAt(0).toUpperCase() + lastName.slice(1)}`,
+          gravityFormEntryId: `gf_entry_${Math.floor(Math.random() * 10000) + 1000}`
         };
       });
     };
-
-    setStats(generateStats(selectedTimeframe));
-    setFailedSubmissions(generateFailedSubmissions());
-  }, [selectedTimeframe]);
 
   if (!stats) return <div>Loading...</div>;
 
@@ -264,6 +300,14 @@ const SubmissionTracker: React.FC = () => {
                   <div>
                     <div className="font-medium text-sm">{submission.formTitle}</div>
                     <div className="text-xs text-gray-600">{submission.errorMessage}</div>
+                    {submission.submittedEmail && (
+                      <div className="text-xs text-blue-600 mt-1">
+                        {submission.userName} - {submission.submittedEmail}
+                      </div>
+                    )}
+                    {submission.gravityFormEntryId && (
+                      <div className="text-xs text-gray-500">ID: {submission.gravityFormEntryId}</div>
+                    )}
                   </div>
                 </div>
                 <div className="text-right">

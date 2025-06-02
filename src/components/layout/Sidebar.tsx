@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  X, Settings, UserCircle, LogOut, Database, Menu, BarChart3, FileText, Users, Bot, Shield
+  X, Settings, UserCircle, LogOut, Database, Menu, BarChart3, FileText, Users, Bot, Shield, Save
 } from 'lucide-react';
 import { logout } from '../../utils/firebase-auth';
 
@@ -128,6 +128,14 @@ const Sidebar: React.FC = () => {
               icon={<Settings size={20} />}
               label="Notification Settings"
               isActive={isActive('/notification-settings')}
+              onClick={closeMobileMenu}
+            />
+            
+            <SidebarLink
+              to="/form-backup"
+              icon={<Save size={20} />}
+              label="Form Data Backup"
+              isActive={isActive('/form-backup')}
               onClick={closeMobileMenu}
             />
 

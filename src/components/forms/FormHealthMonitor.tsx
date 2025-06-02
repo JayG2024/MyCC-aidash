@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, CheckCircle, Clock, TrendingUp, Bell, Zap, RefreshCw } from 'lucide-react';
 import FormDetailModal from './FormDetailModal';
+import { formDataService, FormStats } from '../../services/formDataService';
 
-interface FormHealth {
-  id: string;
-  title: string;
-  status: 'healthy' | 'warning' | 'critical' | 'offline';
-  lastSubmission: string;
-  submissionsToday: number;
-  avgSubmissionsPerHour: number;
-  errorRate: number;
-  responseTime: number;
-}
+// Use FormStats from service instead of local interface
+type FormHealth = FormStats;
 
 interface AlertRule {
   id: string;
@@ -30,9 +23,30 @@ const FormHealthMonitor: React.FC = () => {
   const [selectedForm, setSelectedForm] = useState<FormHealth | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Mock data based on actual MyCC Gravity Forms
+  // Load real form data from API
   useEffect(() => {
-    const generateMockData = (): FormHealth[] => {
+    const loadFormData = async () => {
+      setLoading(true);
+      try {
+        const formStats = await formDataService.getFormStats();
+        setFormsHealth(formStats);
+        setLastUpdate(new Date());
+      } catch (error) {
+        console.error('Error loading form data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFormData();
+    
+    // Set up auto-refresh every 2 minutes
+    const interval = setInterval(loadFormData, 2 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Legacy demo data generator for fallback
+  const generateMockData = (): FormHealth[] => {
       const realForms = [
         { id: '69', title: 'AA Referral Form', entries: 323, views: 1316, conversion: 24.5 },
         { id: '42', title: 'AFF Email Form', entries: 0, views: 1285, conversion: 0 },
@@ -113,14 +127,14 @@ const FormHealthMonitor: React.FC = () => {
           submissionsToday: Math.floor(form.entries * 0.1), // Simulate daily submissions
           avgSubmissionsPerHour: Math.max(1, Math.floor(form.entries / 30)), // Rough hourly estimate
           errorRate: parseFloat(errorRate.toFixed(1)),
-          responseTime: 800 + Math.random() * 2000 // 800-2800ms
+          responseTime: 800 + Math.random() * 2000, // 800-2800ms
+          totalEntries: form.entries,
+          successRate: 100 - parseFloat(errorRate.toFixed(1))
         };
       });
     };
 
-    setFormsHealth(generateMockData());
-    setLoading(false);
-  }, []);
+    // This is now only used as fallback - real data comes from the new useEffect above
 
   const getStatusColor = (status: FormHealth['status']) => {
     switch (status) {
