@@ -127,49 +127,49 @@ const AIChat: React.FC<AIChatProps> = ({
       if (csvData.length > 200000) {
         setErrorMessage('Warning: This is a very large dataset. Analysis may be slow or may fail due to browser memory limits.');
       }
-      // Start streaming
-      setIsStreaming(true);
-      setStreamingContent('');
-      
-      // Add placeholder message for streaming
-      const placeholderMessage: ChatMessage = {
-        role: 'assistant',
-        content: ''
-      };
-      setMessages(prevMessages => [...prevMessages, placeholderMessage]);
-      const messageIndex = messages.length + 1; // Account for user message already added
-      
-      // Call Gemini API with selected model
+      // Call Gemini API with selected model first
       const response = await analyzeDataWithGemini(userMessages, csvData, headers, selectedModel);
       
       if (response) {
+        // Start streaming
+        setIsStreaming(true);
+        setStreamingContent('');
+        
+        // Add placeholder message for streaming
+        const placeholderMessage: ChatMessage = {
+          role: 'assistant',
+          content: ''
+        };
+        setMessages(prevMessages => [...prevMessages, placeholderMessage]);
+        
         // Simulate streaming by chunking the response
         const words = response.split(' ');
-        const chunkSize = 3; // Words per chunk
+        const chunkSize = 4; // Words per chunk
         let currentContent = '';
         
         for (let i = 0; i < words.length; i += chunkSize) {
           const chunk = words.slice(i, i + chunkSize).join(' ') + ' ';
           currentContent += chunk;
           
-          // Update the message content as it streams
+          // Update the last message (which is the placeholder we just added)
           setMessages(prevMessages => {
             const newMessages = [...prevMessages];
-            if (newMessages[messageIndex]) {
-              newMessages[messageIndex].content = currentContent.trim();
+            const lastIndex = newMessages.length - 1;
+            if (newMessages[lastIndex] && newMessages[lastIndex].role === 'assistant') {
+              newMessages[lastIndex].content = currentContent.trim();
             }
             return newMessages;
           });
           
           setStreamingContent(currentContent);
           
-          // Add a small delay to simulate streaming
-          await new Promise(resolve => setTimeout(resolve, 30));
+          // Add a delay to simulate streaming
+          await new Promise(resolve => setTimeout(resolve, 40));
         }
+        
+        setIsStreaming(false);
+        setStreamingContent('');
       }
-      
-      setIsStreaming(false);
-      setStreamingContent('');
     } catch (error: any) {
       let msg = 'Sorry, an error occurred while analyzing your data.';
       if (error?.message?.includes('network')) {
@@ -279,8 +279,11 @@ const AIChat: React.FC<AIChatProps> = ({
       suggestions.push(`What correlations exist between ${numericColumns[0]} and ${numericColumns[1]}?`);
     }
 
-    // Performance analysis
+    // Add column-specific query examples
     if (suggestions.length < 6) {
+      // Show users how to do precise column filtering
+      const sampleColumn = headers[0]; // Use first column as example
+      suggestions.push(`How many entries where ${sampleColumn} = [specific value]?`);
       suggestions.push("Identify the key factors driving performance in this dataset");
       suggestions.push("What patterns and anomalies should I be aware of?");
     }
@@ -290,38 +293,43 @@ const AIChat: React.FC<AIChatProps> = ({
 
   const suggestedPrompts = generateSuggestedPrompts(headers);
 
-  // Custom renderer for markdown content with better table styling
+  // Custom renderer for markdown content with proper table styling
   const MarkdownRenderer = ({ content }: { content: string }) => {
     return (
-      <div className="markdown-content ai-response prose prose-sm max-w-none">
+      <div className="ai-response">
         <ReactMarkdown
           components={{
             table: ({ children }) => (
-              <div className="table-wrapper overflow-x-auto my-4">
-                <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
+              <div className="table-wrapper">
+                <table>
                   {children}
                 </table>
               </div>
             ),
             thead: ({ children }) => (
-              <thead className="bg-gray-50">
+              <thead>
                 {children}
               </thead>
             ),
             tbody: ({ children }) => (
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {children}
               </tbody>
             ),
             th: ({ children }) => (
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+              <th>
                 {children}
               </th>
             ),
             td: ({ children }) => (
-              <td className="px-4 py-3 text-sm text-gray-900 border-b border-gray-100">
+              <td>
                 {children}
               </td>
+            ),
+            tr: ({ children }) => (
+              <tr>
+                {children}
+              </tr>
             ),
           }}
         >

@@ -4,37 +4,34 @@
 
 /* Custom styles for AI response tables - Excel-like styling */
 .ai-response table {
-  width: 100%;
-  margin: 1.5rem 0;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-  border: 1px solid #d1d5db;
-  background-color: white;
+  width: 100% !important;
+  margin: 1.5rem 0 !important;
+  border-collapse: collapse !important;
+  font-size: 0.875rem !important;
+  border: 1px solid #d1d5db !important;
+  background-color: white !important;
   display: table !important;
   table-layout: auto !important;
 }
 
 .ai-response th {
-  background-color: #f3f4f6;
+  background-color: #f3f4f6 !important;
   padding: 0.75rem 1rem !important;
-  text-align: left;
-  font-weight: 600;
-  color: #111827;
-  border: 1px solid #d1d5db;
-  white-space: nowrap;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  text-align: left !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+  border: 1px solid #d1d5db !important;
+  white-space: nowrap !important;
 }
 
 .ai-response td {
   padding: 0.625rem 1rem !important;
-  border: 1px solid #e5e7eb;
-  color: #374151;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 300px;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
 }
 
 .ai-response tr:nth-child(even) {
