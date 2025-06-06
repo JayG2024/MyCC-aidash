@@ -34,7 +34,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isKeyConfigured, setIsKeyConfigured] = useState(false);
   const [isCheckingKey, setIsCheckingKey] = useState(true);
-  const [selectedModel, setSelectedModel] = useState('gemini-2.5-pro');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-pro-preview-06-05');
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [largeDataWarning, setLargeDataWarning] = useState(false);
@@ -43,7 +43,7 @@ const AIChat: React.FC<AIChatProps> = ({
 
   // Available models - optimized for large dataset analysis
   const models = [
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Latest and most advanced model for superior data analysis (Recommended)' },
+    { id: 'gemini-2.5-pro-preview-06-05', name: 'Gemini 2.5 Pro', description: 'Latest and most advanced model for superior data analysis (Recommended)' },
     { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Powerful model for complex data analysis and insights' },
     { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast and cost-effective for quick analyses' }
   ];

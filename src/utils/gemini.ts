@@ -59,7 +59,7 @@ export const checkAPIKeyValidity = async (apiKey: string): Promise<boolean> => {
   try {
     console.log('Checking API key validity...');
     const tempClient = new GoogleGenerativeAI(apiKey);
-    const model = tempClient.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = tempClient.getGenerativeModel({ model: "gemini-2.5-pro-preview-06-05" });
     
     // Make a minimal API call to check if the key is valid
     const result = await model.generateContent("Test");
@@ -407,7 +407,7 @@ export const analyzeDataWithGemini = async (
   messages: Array<{ role: string; content: string }>,
   csvData: any[],
   headers: string[],
-  model: string = 'gemini-2.5-pro'
+  model: string = 'gemini-2.5-pro-preview-06-05'
 ): Promise<string | null> => {
   try {
     console.log(`Analyzing ${csvData.length} rows of data with Gemini model: ${model}`);
