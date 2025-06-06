@@ -139,19 +139,19 @@ const DataAnalysis: React.FC = () => {
   };
 
   return (
-    <Layout title="Executive Data Analysis">
+    <Layout title="Data Analytics Dashboard">
       <ErrorBoundary>
         <div className="space-y-6">
           {/* Header section */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-800 flex items-center">
-                  <Database className="mr-2" size={24} />
-                  Business Intelligence Dashboard
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                  <Database className="mr-3" size={28} />
+                  Data Analytics Dashboard
                 </h2>
                 <p className="text-gray-600 mt-1">
-                  Upload your sales, marketing, and operations data to uncover valuable business insights
+                  Upload massive spreadsheets, ask natural language questions, and get instant AI-powered business insights
                 </p>
               </div>
               
@@ -170,7 +170,7 @@ const DataAnalysis: React.FC = () => {
                     className="flex items-center py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                   >
                     <Key size={18} className="mr-2" />
-                    Connect OpenAI API
+                    Connect Gemini AI
                   </button>
                 )}
                 {csvData && csvData.length > 0 && (
@@ -217,12 +217,14 @@ const DataAnalysis: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Upload and Stats */}
             <div className="lg:col-span-1 space-y-6">
-              <DataUpload 
-                onDataParsed={handleDataParsed} 
-                onBrowseLibrary={() => setIsLibraryOpen(true)}
-                onSaveToLibrary={handleSaveToLibrary}
-                hasActiveData={!!csvData && csvData.length > 0}
-              />
+              <div id="upload-section">
+                <DataUpload 
+                  onDataParsed={handleDataParsed} 
+                  onBrowseLibrary={() => setIsLibraryOpen(true)}
+                  onSaveToLibrary={handleSaveToLibrary}
+                  hasActiveData={!!csvData && csvData.length > 0}
+                />
+              </div>
               
               {csvData && csvData.length > 0 && datasetInfo && (
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -282,7 +284,7 @@ const DataAnalysis: React.FC = () => {
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2">2.</span>
-                    <span>Connect your OpenAI API key (stored locally)</span>
+                    <span>Connect your Gemini AI key (stored locally)</span>
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2">3.</span>
@@ -298,7 +300,8 @@ const DataAnalysis: React.FC = () => {
             
             {/* Right Column - Data Table */}
             <div className="lg:col-span-2">
-              {isLoading ? (
+              <div id="table-section">
+                {isLoading ? (
                 <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex items-center justify-center">
                   <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mb-4"></div>
@@ -322,18 +325,21 @@ const DataAnalysis: React.FC = () => {
                     </button>
                   </div>
                 </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
           
           {/* AI Chat Component - Always visible, just minimized/maximized */}
-          <AIChat 
-            csvData={csvData} 
-            headers={headers} 
-            isMinimized={isChatMinimized}
-            onToggleMinimize={() => setIsChatMinimized(!isChatMinimized)}
-            onRequestAPIKey={handleOpenApiKeyModal}
-          />
+          <div id="chat-section">
+            <AIChat 
+              csvData={csvData} 
+              headers={headers} 
+              isMinimized={isChatMinimized}
+              onToggleMinimize={() => setIsChatMinimized(!isChatMinimized)}
+              onRequestAPIKey={handleOpenApiKeyModal}
+            />
+          </div>
           
           {/* Dataset Library Modal */}
           {isLibraryOpen && (

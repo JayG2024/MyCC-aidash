@@ -1,45 +1,13 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
-  X, Settings, UserCircle, LogOut, Database, Menu, BarChart3, FileText, Users, Bot, Save
+  X, LogOut, Menu, Database, FileSpreadsheet, Brain, BarChart3, MessageSquare, Upload
 } from 'lucide-react';
 import { logout } from '../../utils/firebase-auth';
 
-interface SidebarLinkProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  isActive: boolean;
-  onClick?: () => void;
-}
-
-const SidebarLink: React.FC<SidebarLinkProps> = ({ 
-  to, icon, label, isActive, onClick 
-}) => {
-  return (
-    <Link
-      to={to}
-      className={`flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
-        isActive 
-          ? 'bg-blue-100 text-blue-700' 
-          : 'text-gray-600 hover:bg-gray-100'
-      }`}
-      onClick={onClick}
-    >
-      <span className="mr-3">{icon}</span>
-      <span className="font-medium">{label}</span>
-    </Link>
-  );
-};
-
 const Sidebar: React.FC = () => {
-  const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
-  };
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
@@ -54,6 +22,14 @@ const Sidebar: React.FC = () => {
         console.error('Error logging out:', error);
       }
     }
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    closeMobileMenu();
   };
 
   return (
@@ -75,55 +51,78 @@ const Sidebar: React.FC = () => {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 border-b">
-            <img 
-              src="https://www.mycomputercareer.edu/wp-content/uploads/2024/02/mycc_newlogo_blue_trans2.png.webp" 
-              alt="MyComputerCareer Logo" 
-              className="h-8 object-contain"
-            />
+            <div className="flex items-center">
+              <Brain className="h-8 w-8 text-blue-600 mr-2" />
+              <div className="text-lg font-bold text-gray-800">
+                Data Analytics
+              </div>
+            </div>
           </div>
 
-          {/* Links */}
-          <nav className="flex-1 pt-4 pb-4 overflow-y-auto">
-            <div className="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase">
-              Data Analysis
+          {/* Navigation */}
+          <nav className="flex-1 pt-6 pb-4 overflow-y-auto">
+            <div className="px-4 mb-4 text-xs font-semibold text-gray-400 uppercase">
+              Quick Actions
             </div>
-            <SidebarLink
-              to="/data-analysis"
-              icon={<Database size={20} />}
-              label="Data Upload & Analysis"
-              isActive={isActive('/data-analysis')}
-              onClick={closeMobileMenu}
-            />
             
-            <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
-              Settings
-            </div>
-            <SidebarLink
-              to="/notification-settings"
-              icon={<Settings size={20} />}
-              label="Notification Settings"
-              isActive={isActive('/notification-settings')}
-              onClick={closeMobileMenu}
-            />
-            
-            <SidebarLink
-              to="/form-backup"
-              icon={<Save size={20} />}
-              label="Form Data Backup"
-              isActive={isActive('/form-backup')}
-              onClick={closeMobileMenu}
-            />
+            <button
+              onClick={() => scrollToSection('upload-section')}
+              className="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg mx-2 transition-colors"
+            >
+              <Upload size={20} className="mr-3" />
+              <span className="font-medium">Upload Data</span>
+            </button>
 
-            <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
-              Account
+            <button
+              onClick={() => scrollToSection('chat-section')}
+              className="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg mx-2 transition-colors"
+            >
+              <MessageSquare size={20} className="mr-3" />
+              <span className="font-medium">Ask Questions</span>
+            </button>
+
+            <button
+              onClick={() => scrollToSection('table-section')}
+              className="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg mx-2 transition-colors"
+            >
+              <BarChart3 size={20} className="mr-3" />
+              <span className="font-medium">View Data</span>
+            </button>
+
+            <div className="px-4 mt-8 mb-4 text-xs font-semibold text-gray-400 uppercase">
+              Features
             </div>
-            <SidebarLink
-              to="/profile"
-              icon={<UserCircle size={20} />}
-              label="Profile"
-              isActive={isActive('/profile')}
-              onClick={closeMobileMenu}
-            />
+
+            <div className="px-4 space-y-3 text-sm text-gray-600">
+              <div className="flex items-center">
+                <FileSpreadsheet size={16} className="mr-2 text-blue-500" />
+                <span>Massive Spreadsheet Support</span>
+              </div>
+              <div className="flex items-center">
+                <Brain size={16} className="mr-2 text-purple-500" />
+                <span>Gemini AI Analysis</span>
+              </div>
+              <div className="flex items-center">
+                <Database size={16} className="mr-2 text-green-500" />
+                <span>Smart Data Processing</span>
+              </div>
+              <div className="flex items-center">
+                <BarChart3 size={16} className="mr-2 text-orange-500" />
+                <span>Executive Insights</span>
+              </div>
+            </div>
+
+            <div className="px-4 mt-8 mb-4">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-100">
+                <div className="flex items-center mb-2">
+                  <Brain className="h-5 w-5 text-blue-600 mr-2" />
+                  <span className="font-semibold text-blue-900">AI Powered</span>
+                </div>
+                <p className="text-xs text-blue-700">
+                  Upload spreadsheets up to 200MB+ and ask natural language questions to get instant business insights.
+                </p>
+              </div>
+            </div>
           </nav>
 
           {/* Logout */}
