@@ -8,8 +8,6 @@ import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
 import UserProfile from './pages/UserProfile';
 import DataAnalysis from './pages/DataAnalysis';
-import GravityFormsData from './pages/GravityFormsData';
-import FormMonitoring from './pages/FormMonitoring';
 import NotificationSettingsPage from './pages/NotificationSettings';
 import FormBackup from './pages/FormBackup';
 import Login from './pages/Login';
@@ -34,19 +32,17 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<FormMonitoring />} />
+          <Route path="/" element={<DataAnalysis />} />
           <Route path="/assistants" element={<AIAssistants />} />
           <Route path="/leads" element={<LeadManagement />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/data-analysis" element={<DataAnalysis />} />
           <Route path="/content-library" element={<AIAssistants />} />
-          <Route path="/gravity-forms" element={<GravityFormsData />} />
-          <Route path="/form-monitoring" element={<FormMonitoring />} />
           <Route path="/notification-settings" element={<NotificationSettingsPage />} />
           <Route path="/form-backup" element={<FormBackup />} />
           {/* Catch-all route for 404 */}
-          <Route path="*" element={<FormMonitoring />} />
+          <Route path="*" element={<DataAnalysis />} />
         </Routes>
       </AuthWrapper>
     </Router>

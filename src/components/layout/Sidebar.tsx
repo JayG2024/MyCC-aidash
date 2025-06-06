@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  X, Settings, UserCircle, LogOut, Database, Menu, BarChart3, FileText, Users, Bot, Shield, Save
+  X, Settings, UserCircle, LogOut, Database, Menu, BarChart3, FileText, Users, Bot, Save
 } from 'lucide-react';
 import { logout } from '../../utils/firebase-auth';
 
@@ -92,20 +92,6 @@ const Sidebar: React.FC = () => {
               icon={<Database size={20} />}
               label="Data Upload & Analysis"
               isActive={isActive('/data-analysis')}
-              onClick={closeMobileMenu}
-            />
-            <SidebarLink
-              to="/gravity-forms"
-              icon={<FileText size={20} />}
-              label="Gravity Forms Data"
-              isActive={isActive('/gravity-forms')}
-              onClick={closeMobileMenu}
-            />
-            <SidebarLink
-              to="/form-monitoring"
-              icon={<Shield size={20} />}
-              label="Form Health Monitor"
-              isActive={isActive('/form-monitoring')}
               onClick={closeMobileMenu}
             />
             

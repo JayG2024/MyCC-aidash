@@ -2,8 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// Import Gravity Forms routes
-import gravityFormsRoutes from './src/server/gravityFormsProxy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,8 +18,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mount Gravity Forms routes directly at the root level (no /api prefix)
-app.use('/', gravityFormsRoutes);
 
 // Serve static files from the React app in production
 if (process.env.NODE_ENV === 'production') {
@@ -34,5 +30,5 @@ if (process.env.NODE_ENV === 'production') {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log('Gravity Forms integration: ENABLED (demo mode)');
+  console.log('Server running in dashboard mode');
 });

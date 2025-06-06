@@ -1,0 +1,44 @@
+[debug] [2025-06-06T04:30:38.538Z] ----------------------------------------------------------------------
+[debug] [2025-06-06T04:30:38.539Z] Command:       /usr/local/bin/node /Users/jasongordon/.npm-global/bin/firebase projects:list
+[debug] [2025-06-06T04:30:38.539Z] CLI Version:   14.5.0
+[debug] [2025-06-06T04:30:38.539Z] Platform:      darwin
+[debug] [2025-06-06T04:30:38.539Z] Node Version:  v22.16.0
+[debug] [2025-06-06T04:30:38.540Z] Time:          Fri Jun 06 2025 06:30:38 GMT+0200 (Central European Summer Time)
+[debug] [2025-06-06T04:30:38.540Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-06T04:30:38.617Z] Field "/functions/runtime" in "firebase.json" is possibly invalid: must be equal to one of the allowed values
+[debug] [2025-06-06T04:30:38.617Z] Field "/functions" in "firebase.json" is possibly invalid: must be array
+[debug] [2025-06-06T04:30:38.617Z] Field "/functions" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-06-06T04:30:38.620Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-06T04:30:38.620Z] > authorizing via signed-in user (jason@jaydus.ai)
+[debug] [2025-06-06T04:30:38.621Z] Checked if tokens are valid: false, expires at: 1749142717223
+[debug] [2025-06-06T04:30:38.621Z] Checked if tokens are valid: false, expires at: 1749142717223
+[debug] [2025-06-06T04:30:38.621Z] > refreshing access token with scopes: []
+[debug] [2025-06-06T04:30:38.622Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-06-06T04:30:38.622Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-06-06T04:30:38.790Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2025-06-06T04:30:38.790Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2025-06-06T04:30:38.791Z] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2025-06-06T04:30:38.946Z] FirebaseError: Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+    at invalidCredentialError (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/auth.js:167:12)
+    at refreshTokens (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/auth.js:556:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async getAccessToken (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/apiv2.js:42:18)
+    at async Client.addAuthHeader (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/apiv2.js:169:21)
+    at async Client.request (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/apiv2.js:120:34)
+    at async getProjectPage (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/management/projects.js:253:17)
+    at async getFirebaseProjectPage (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/management/projects.js:270:23)
+    at async listFirebaseProjects (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/management/projects.js:301:29)
+    at async Command.actionFn (/Users/jasongordon/.npm-global/lib/node_modules/firebase-tools/lib/commands/projects-list.js:51:20)
+[error] 
+[error] Error: Failed to list Firebase projects. See firebase-debug.log for more info.
