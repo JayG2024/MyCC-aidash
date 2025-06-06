@@ -92,7 +92,7 @@ const Sidebar: React.FC = () => {
               </div>
               <div className="flex items-center">
                 <Brain size={16} className="mr-2 text-purple-500" />
-                <span>Gemini AI Analysis</span>
+                <span>Gemini 2.5 Pro Analysis</span>
               </div>
               <div className="flex items-center">
                 <Database size={16} className="mr-2 text-green-500" />
@@ -108,10 +108,10 @@ const Sidebar: React.FC = () => {
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-100">
                 <div className="flex items-center mb-2">
                   <Brain className="h-5 w-5 text-blue-600 mr-2" />
-                  <span className="font-semibold text-blue-900">AI Powered</span>
+                  <span className="font-semibold text-blue-900">Gemini 2.5 Pro</span>
                 </div>
                 <p className="text-xs text-blue-700">
-                  Upload massive spreadsheets and start asking questions immediately with side-by-side analysis workflow.
+                  Latest AI model with superior reasoning. Upload massive spreadsheets and get advanced analysis immediately.
                 </p>
               </div>
             </div>

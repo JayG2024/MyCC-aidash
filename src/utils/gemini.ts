@@ -59,7 +59,7 @@ export const checkAPIKeyValidity = async (apiKey: string): Promise<boolean> => {
   try {
     console.log('Checking API key validity...');
     const tempClient = new GoogleGenerativeAI(apiKey);
-    const model = tempClient.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = tempClient.getGenerativeModel({ model: "gemini-2.5-pro" });
     
     // Make a minimal API call to check if the key is valid
     const result = await model.generateContent("Test");
@@ -407,7 +407,7 @@ export const analyzeDataWithGemini = async (
   messages: Array<{ role: string; content: string }>,
   csvData: any[],
   headers: string[],
-  model: string = 'gemini-1.5-flash'
+  model: string = 'gemini-2.5-pro'
 ): Promise<string | null> => {
   try {
     console.log(`Analyzing ${csvData.length} rows of data with Gemini model: ${model}`);
@@ -418,8 +418,8 @@ export const analyzeDataWithGemini = async (
       throw new Error('Gemini client not initialized. Please provide your API key.');
     }
     
-    // Process large datasets in chunks - Gemini handles smaller chunks better
-    const chunkSize = 2000;
+    // Process large datasets in chunks - Gemini 2.5 Pro can handle larger contexts
+    const chunkSize = 5000;
     const processedData = processDataInChunks(csvData, headers, chunkSize);
     console.log(`Processed data: ${processedData.processedInChunks ? 'Chunked' : 'Full'} dataset`);
     

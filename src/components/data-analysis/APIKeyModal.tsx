@@ -105,7 +105,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
             <div className="flex items-start bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100">
               <Sparkles size={18} className="mr-2 text-blue-600 mt-0.5 flex-shrink-0" />
               <p className="text-sm">
-                Connect your Google Gemini API key to enable AI-powered data analysis. Gemini 1.5 Flash offers efficient and cost-effective business intelligence.
+                Connect your Google Gemini API key to enable AI-powered data analysis. Gemini 2.5 Pro offers the most advanced reasoning and analysis capabilities.
               </p>
             </div>
           </div>

@@ -26,7 +26,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'I\'m your AI data analyst powered by Google Gemini. Upload your data and ask me anything about it - I can help identify trends, analyze patterns, and provide meaningful insights tailored for executives and sales leaders.'
+      content: 'I\'m your AI data analyst powered by Google Gemini 2.5 Pro - the latest and most advanced AI model. Upload your data and ask me anything about it - I can provide sophisticated analysis, identify complex patterns, and deliver executive-ready insights with superior reasoning capabilities.'
     }
   ]);
   const [input, setInput] = useState('');
@@ -34,7 +34,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isKeyConfigured, setIsKeyConfigured] = useState(false);
   const [isCheckingKey, setIsCheckingKey] = useState(true);
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
+  const [selectedModel, setSelectedModel] = useState('gemini-2.5-pro');
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [largeDataWarning, setLargeDataWarning] = useState(false);
@@ -43,8 +43,9 @@ const AIChat: React.FC<AIChatProps> = ({
 
   // Available models - optimized for large dataset analysis
   const models = [
-    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast and cost-effective for most business analyses (Recommended)' },
-    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Most capable model for complex data analysis and insights' }
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Latest and most advanced model for superior data analysis (Recommended)' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Powerful model for complex data analysis and insights' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast and cost-effective for quick analyses' }
   ];
 
   // Check if API key is configured
