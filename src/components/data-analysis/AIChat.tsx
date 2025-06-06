@@ -26,7 +26,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'I\'m your AI data analyst powered by Google Gemini 2.5 Pro - the latest and most advanced AI model. Upload your data and ask me anything about it - I can provide sophisticated analysis, identify complex patterns, and deliver executive-ready insights with superior reasoning capabilities.'
+      content: 'I\'m your AI data analyst powered by Google Gemini 2.5 Pro - the latest and most advanced AI model with superior reasoning capabilities. Upload your data and ask me anything about it - I can provide sophisticated analysis, identify complex patterns, and deliver executive-ready insights with advanced thinking capabilities.'
     }
   ]);
   const [input, setInput] = useState('');
