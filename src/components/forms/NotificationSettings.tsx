@@ -39,7 +39,7 @@ const NotificationSettings: React.FC = () => {
     smsEnabled: false,
     dashboardEnabled: true,
     defaultRecipients: {
-      emails: ['admin@mycomputercareer.edu'],
+      emails: ['jason@jaydus.ai', 'admin@mycomputercareer.edu'],
       phones: ['+1234567890'],
       slackChannels: ['#form-alerts']
     },
@@ -199,6 +199,36 @@ const NotificationSettings: React.FC = () => {
   const getRuleTypeInfo = (type: string) => {
     return ruleTypes.find(t => t.id === type) || ruleTypes[0];
   };
+
+  const handleSaveSettings = () => {
+    try {
+      // Save settings to localStorage
+      localStorage.setItem('notificationSettings', JSON.stringify({
+        globalSettings,
+        rules
+      }));
+      
+      // Show success message
+      alert('Settings saved successfully!');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Error saving settings. Please try again.');
+    }
+  };
+
+  // Load settings from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('notificationSettings');
+      if (savedSettings) {
+        const { globalSettings: saved, rules: savedRules } = JSON.parse(savedSettings);
+        if (saved) setGlobalSettings(saved);
+        if (savedRules) setRules(savedRules);
+      }
+    } catch (error) {
+      console.error('Error loading saved settings:', error);
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -518,7 +548,10 @@ const NotificationSettings: React.FC = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <button className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+        <button 
+          onClick={handleSaveSettings}
+          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+        >
           <Save size={16} className="mr-2" />
           Save All Settings
         </button>

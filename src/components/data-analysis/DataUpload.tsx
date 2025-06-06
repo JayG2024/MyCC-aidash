@@ -25,6 +25,14 @@ const DataUpload: React.FC<DataUploadProps> = ({
   const [processingInfo, setProcessingInfo] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [showLargeFileWarning, setShowLargeFileWarning] = useState(false);
+  const [rowsProcessed, setRowsProcessed] = useState(0);
+  const [totalRows, setTotalRows] = useState(0);
+  const [memoryUsage, setMemoryUsage] = useState<string | null>(null);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [availableColumns, setAvailableColumns] = useState<string[]>([]);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [previewData, setPreviewData] = useState<any[] | null>(null);
+  const [processingMode, setProcessingMode] = useState<'full' | 'sample' | 'streaming'>('full');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -48,16 +56,94 @@ const DataUpload: React.FC<DataUploadProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleFile = useCallback((file: File) => {
+  // Monitor memory usage
+  const getMemoryUsage = (): string => {
+    if ('memory' in performance) {
+      const memory = (performance as any).memory;
+      return `${Math.round(memory.usedJSHeapSize / 1024 / 1024)}MB used`;
+    }
+    return 'Memory monitoring unavailable';
+  };
+
+  // Smart processing mode selection based on file size
+  const selectProcessingMode = (fileSize: number): 'full' | 'sample' | 'streaming' => {
+    if (fileSize > 200 * 1024 * 1024) { // > 200MB
+      return 'streaming';
+    } else if (fileSize > 50 * 1024 * 1024) { // > 50MB
+      return 'sample';
+    }
+    return 'full';
+  };
+
+  // Preview file content for column selection
+  const previewFile = async (file: File): Promise<{ headers: string[], preview: any[] }> => {
+    return new Promise((resolve, reject) => {
+      const isCSV = file.name.toLowerCase().endsWith('.csv');
+      
+      if (isCSV) {
+        Papa.parse(file, {
+          header: true,
+          preview: 5, // Only parse first 5 rows for preview
+          complete: (results) => {
+            resolve({
+              headers: results.meta.fields || [],
+              preview: results.data
+            });
+          },
+          error: reject
+        });
+      } else {
+        // Excel preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = new Uint8Array(e.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            
+            // Get just the first 6 rows (header + 5 data rows)
+            const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+            range.e.r = Math.min(range.e.r, 5);
+            
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+              header: 1,
+              range: range,
+              defval: ''
+            });
+            
+            const headers = (jsonData[0] as string[]) || [];
+            const preview = jsonData.slice(1).map((row: unknown[]) => {
+              const obj: Record<string, unknown> = {};
+              headers.forEach((header, index) => {
+                obj[header] = row[index] || '';
+              });
+              return obj;
+            });
+            
+            resolve({ headers, preview });
+          } catch (error) {
+            reject(error);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    });
+  };
+
+  const handleFile = useCallback(async (file: File) => {
     // Reset states
     setFileName(file.name);
     setFileSize(formatFileSize(file.size));
     setError(null);
-    setLoading(true);
+    setLoading(false);
     setSuccess(false);
     setProgress(0);
     setProcessingInfo(null);
     setShowLargeFileWarning(false);
+    setRowsProcessed(0);
+    setTotalRows(0);
+    setMemoryUsage(getMemoryUsage());
 
     // Validate file type
     const fileExtension = file.name.toLowerCase();
@@ -66,28 +152,180 @@ const DataUpload: React.FC<DataUploadProps> = ({
     
     if (!isCSV && !isExcel) {
       setError('Please upload a CSV file (.csv) or Excel file (.xlsx, .xls)');
-      setLoading(false);
       return;
     }
 
-    // Warning for very large files
-    if (file.size > 50 * 1024 * 1024) { // > 50MB
+    // Determine processing mode based on file size
+    const mode = selectProcessingMode(file.size);
+    setProcessingMode(mode);
+
+    // Set warnings and processing info based on file size
+    if (file.size > 200 * 1024 * 1024) { // > 200MB
       setShowLargeFileWarning(true);
-      setProcessingInfo('Warning: This file is very large and may not process reliably in the browser. Consider splitting it into smaller files if you encounter issues.');
+      setProcessingInfo('Massive file detected. Using streaming mode for optimal performance and memory usage.');
+    } else if (file.size > 50 * 1024 * 1024) { // > 50MB
+      setShowLargeFileWarning(true);
+      setProcessingInfo('Large file detected. Will process a representative sample to reduce memory usage.');
     } else if (file.size > 10 * 1024 * 1024) { // > 10MB
       setProcessingInfo('Large file detected. Processing may take a few moments...');
     }
 
-    // Process file based on type
+    try {
+      // First, get a preview to show available columns
+      setProcessingInfo('Analyzing file structure...');
+      const preview = await previewFile(file);
+      setAvailableColumns(preview.headers);
+      setSelectedColumns(preview.headers); // Select all by default
+      setPreviewData(preview.preview);
+
+      // For massive files, show column selector
+      if (mode === 'streaming' || mode === 'sample') {
+        setShowColumnSelector(true);
+        setProcessingInfo(`File structure analyzed. ${preview.headers.length} columns found. You can select specific columns to reduce memory usage.`);
+        return; // Wait for user to select columns
+      }
+
+      // For normal files, process immediately
+      await processFileWithMode(file, mode, preview.headers);
+    } catch (error) {
+      setError(`Error analyzing file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }, []);
+
+  const processFileWithMode = async (file: File, mode: 'full' | 'sample' | 'streaming', headers: string[]) => {
+    setLoading(true);
+    setShowColumnSelector(false);
+    
+    const isCSV = file.name.toLowerCase().endsWith('.csv');
+    const columnsToInclude = selectedColumns.length > 0 ? selectedColumns : headers;
+
+    if (mode === 'streaming') {
+      await processFileInStreamingMode(file, isCSV, columnsToInclude);
+    } else if (mode === 'sample') {
+      await processFileAsSample(file, isCSV, columnsToInclude);
+    } else {
+      await processFileCompletely(file, isCSV, columnsToInclude);
+    }
+  };
+
+  const processFileInStreamingMode = async (file: File, isCSV: boolean, columns: string[]) => {
+    setProcessingInfo('Processing in streaming mode for memory efficiency...');
+    
+    const batchSize = 1000;
+    let processedData: any[] = [];
+    let processedRowCount = 0;
+    
     if (isCSV) {
-      // Configure Papa Parse with optimized settings for large files
+      return new Promise<void>((resolve, reject) => {
+        Papa.parse(file, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          worker: true,
+          step: function(results) {
+            const row = results.data as any;
+            
+            // Filter to selected columns only
+            const filteredRow: any = {};
+            columns.forEach(col => {
+              filteredRow[col] = row[col];
+            });
+            
+            processedData.push(filteredRow);
+            processedRowCount++;
+            
+            // Update progress
+            if (results.meta.cursor && file.size) {
+              const newProgress = Math.round((results.meta.cursor / file.size) * 100);
+              setProgress(newProgress);
+              setRowsProcessed(processedRowCount);
+              
+              if (processedRowCount % 1000 === 0) {
+                setProcessingInfo(`Streaming: ${processedRowCount.toLocaleString()} rows processed...`);
+                setMemoryUsage(getMemoryUsage());
+              }
+            }
+            
+            // For streaming mode, we'll take a representative sample
+            if (processedData.length >= 10000) {
+              results.abort();
+            }
+          },
+          complete: () => {
+            handleParseComplete(processedData, columns, []);
+            resolve();
+          },
+          error: reject
+        });
+      });
+    } else {
+      // Excel streaming (sample approach)
+      await processFileAsSample(file, false, columns);
+    }
+  };
+
+  const processFileAsSample = async (file: File, isCSV: boolean, columns: string[]) => {
+    setProcessingInfo('Processing representative sample...');
+    
+    if (isCSV) {
+      return new Promise<void>((resolve, reject) => {
+        let sampleData: any[] = [];
+        let rowCount = 0;
+        const sampleSize = 5000; // Take first 5000 rows as sample
+        
+        Papa.parse(file, {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          worker: true,
+          step: function(results) {
+            if (rowCount < sampleSize) {
+              const row = results.data as any;
+              const filteredRow: any = {};
+              columns.forEach(col => {
+                filteredRow[col] = row[col];
+              });
+              sampleData.push(filteredRow);
+            }
+            
+            rowCount++;
+            
+            if (results.meta.cursor && file.size) {
+              const newProgress = Math.round((results.meta.cursor / file.size) * 100);
+              setProgress(newProgress);
+              setRowsProcessed(rowCount);
+              
+              if (rowCount % 1000 === 0) {
+                setProcessingInfo(`Sampling: ${rowCount.toLocaleString()} rows processed...`);
+              }
+            }
+            
+            if (rowCount >= sampleSize) {
+              results.abort();
+            }
+          },
+          complete: () => {
+            setProcessingInfo(`Sample complete: ${sampleData.length.toLocaleString()} rows from ${rowCount.toLocaleString()} total rows.`);
+            handleParseComplete(sampleData, columns, []);
+            resolve();
+          },
+          error: reject
+        });
+      });
+    } else {
+      // Excel sample processing
+      await processExcelFile(file);
+    }
+  };
+
+  const processFileCompletely = async (file: File, isCSV: boolean, columns: string[]) => {
+    if (isCSV) {
       Papa.parse(file, {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
-        worker: file.size > 5 * 1024 * 1024, // Use worker for files > 5MB
+        worker: file.size > 5 * 1024 * 1024,
         step: function(results) {
-          // Update progress periodically for better UX
           if (results.meta.cursor && file.size) {
             const newProgress = Math.round((results.meta.cursor / file.size) * 100);
             if (newProgress !== progress && newProgress % 5 === 0) {
@@ -97,19 +335,25 @@ const DataUpload: React.FC<DataUploadProps> = ({
           }
         },
         complete: (results) => {
-          handleParseComplete(results.data, results.meta.fields || [], results.errors);
+          // Filter data to selected columns
+          const filteredData = results.data.map((row: any) => {
+            const filteredRow: any = {};
+            columns.forEach(col => {
+              filteredRow[col] = row[col];
+            });
+            return filteredRow;
+          });
+          handleParseComplete(filteredData, columns, results.errors);
         },
         error: (error) => {
           setLoading(false);
           setError(`Error parsing CSV: ${error.message}`);
-          console.error('Papa Parse error:', error);
         }
       });
-    } else if (isExcel) {
-      // Process Excel file
-      processExcelFile(file);
+    } else {
+      await processExcelFile(file);
     }
-  }, [onDataParsed, progress]);
+  };
 
   // Handle Excel file processing
   const processExcelFile = (file: File) => {
@@ -247,9 +491,48 @@ const DataUpload: React.FC<DataUploadProps> = ({
     setProgress(0);
     setProcessingInfo(null);
     setShowLargeFileWarning(false);
+    setRowsProcessed(0);
+    setTotalRows(0);
+    setMemoryUsage(null);
+    setShowColumnSelector(false);
+    setAvailableColumns([]);
+    setSelectedColumns([]);
+    setPreviewData(null);
+    setProcessingMode('full');
+    
     // Also clear the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  // Column selection functions
+  const toggleColumn = (column: string) => {
+    setSelectedColumns(prev => 
+      prev.includes(column) 
+        ? prev.filter(col => col !== column)
+        : [...prev, column]
+    );
+  };
+
+  const selectAllColumns = () => {
+    setSelectedColumns(availableColumns);
+  };
+
+  const selectNoneColumns = () => {
+    setSelectedColumns([]);
+  };
+
+  // Proceed with selected columns
+  const proceedWithSelectedColumns = async () => {
+    if (selectedColumns.length === 0) {
+      setError('Please select at least one column to proceed.');
+      return;
+    }
+
+    const file = fileInputRef.current?.files?.[0];
+    if (file) {
+      await processFileWithMode(file, processingMode, availableColumns);
     }
   };
 

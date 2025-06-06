@@ -7,7 +7,7 @@ import DatasetLibrary from '../components/data-analysis/DatasetLibrary';
 import SaveToLibraryModal from '../components/data-analysis/SaveToLibraryModal';
 import APIKeyModal from '../components/data-analysis/APIKeyModal';
 import { saveCSVData, loadCSVData, saveChatHistory, loadChatHistory, StoredCSVData } from '../utils/localStorage';
-import { isAPIKeyConfigured, clearOpenAIApiKey } from '../utils/openai';
+import { isAPIKeyConfigured, clearGeminiApiKey } from '../utils/gemini';
 import { FileDown, FileUp, Database, Brain, Trash2, AlertTriangle, BookOpen, Key, Info, FileText, Check } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -131,8 +131,8 @@ const DataAnalysis: React.FC = () => {
   };
   
   const handleClearApiKey = async () => {
-    if (window.confirm('Are you sure you want to remove your custom OpenAI API key? The system will fall back to using the demo key with limited functionality.')) {
-      await clearOpenAIApiKey();
+    if (window.confirm('Are you sure you want to remove your custom Gemini API key? The system will fall back to using the demo key with limited functionality.')) {
+      await clearGeminiApiKey();
       // We should still have the default key available
       setHasApiKey(true);
     }

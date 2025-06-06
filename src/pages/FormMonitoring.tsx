@@ -37,7 +37,8 @@ const FormMonitoring: React.FC = () => {
 
         {showSettings && <APIConfiguration />}
 
-        <EmergencyAlertPanel />
+        {/* Temporarily disabled until real API is working */}
+        {/* <EmergencyAlertPanel /> */}
 
         <FormHealthMonitor />
       </div>

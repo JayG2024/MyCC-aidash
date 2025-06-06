@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import { AlertTriangle, Database, RefreshCw, ExternalLink, Key, CheckCircle, Code, Bot, Send, Loader2, FileText, MessageCircle, Info, X, Link } from 'lucide-react';
-import { analyzeDataWithGPT, isAPIKeyConfigured } from '../utils/openai';
+import { analyzeDataWithGemini, isAPIKeyConfigured } from '../utils/gemini';
 import ReactMarkdown from 'react-markdown';
 import ErrorBoundary from '../components/ErrorBoundary';
 
@@ -23,7 +23,7 @@ const GravityFormsData: React.FC = () => {
   const [aiError, setAiError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if OpenAI API key is configured
+    // Check if Gemini API key is configured
     const checkApiKey = async () => {
       const hasKey = await isAPIKeyConfigured();
       setHasApiKey(hasKey);
@@ -137,14 +137,14 @@ const GravityFormsData: React.FC = () => {
     setAiError(null);
     
     try {
-      // Call OpenAI
+      // Call Gemini
       const context = `The data is from a Gravity Form named "${forms.find(f => f.id === selectedForm)?.title || 'Unknown Form'}" with ${entries.length} entries.`;
       const messages = [
         ...chatHistory,
         userMessage
       ];
       
-      const response = await analyzeDataWithGPT(messages, entries, Object.keys(entries[0] || {}), 'o3-mini-2025-01-31');
+      const response = await analyzeDataWithGemini(messages, entries, Object.keys(entries[0] || {}), 'gemini-1.5-flash');
       
       if (response) {
         setChatHistory(prev => [...prev, { role: 'assistant', content: response }]);

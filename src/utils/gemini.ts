@@ -1,56 +1,52 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import localforage from 'localforage';
 
-// Initialize OpenAI client
-let openaiClient: OpenAI | null = null;
+// Initialize Gemini client
+let geminiClient: GoogleGenerativeAI | null = null;
 
 // Default API key that will be used if no user-provided key is found
-// In production, this should be replaced with an environment variable
-const DEFAULT_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || "";
+const DEFAULT_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
-export const initializeOpenAI = async (apiKey?: string): Promise<boolean> => {
+export const initializeGemini = async (apiKey?: string): Promise<boolean> => {
   try {
     // Use provided key or try to get from storage, or fall back to default key
-    const key = apiKey || await localforage.getItem<string>('openai_api_key') || DEFAULT_API_KEY;
+    const key = apiKey || await localforage.getItem<string>('gemini_api_key') || DEFAULT_API_KEY;
     
     if (!key) {
-      console.log('No OpenAI API key found');
+      console.log('No Gemini API key found');
       return false;
     }
     
-    openaiClient = new OpenAI({
-      apiKey: key,
-      dangerouslyAllowBrowser: true // For client-side usage
-    });
+    geminiClient = new GoogleGenerativeAI(key);
     
     // Save API key for future sessions if provided (and not the default)
     if (apiKey && apiKey !== DEFAULT_API_KEY) {
-      await localforage.setItem('openai_api_key', apiKey);
+      await localforage.setItem('gemini_api_key', apiKey);
     }
     
-    console.log('OpenAI client initialized successfully');
+    console.log('Gemini client initialized successfully');
     return true;
   } catch (error) {
-    console.error('Error initializing OpenAI:', error);
+    console.error('Error initializing Gemini:', error);
     return false;
   }
 };
 
-export const getOpenAIClient = async (): Promise<OpenAI | null> => {
-  if (!openaiClient) {
-    const initialized = await initializeOpenAI();
+export const getGeminiClient = async (): Promise<GoogleGenerativeAI | null> => {
+  if (!geminiClient) {
+    const initialized = await initializeGemini();
     if (!initialized) {
-      console.log('Failed to initialize OpenAI client');
+      console.log('Failed to initialize Gemini client');
       return null;
     }
   }
-  return openaiClient;
+  return geminiClient;
 };
 
-export const clearOpenAIApiKey = async (): Promise<void> => {
-  openaiClient = null;
-  await localforage.removeItem('openai_api_key');
-  console.log('OpenAI API key cleared, will fall back to default key');
+export const clearGeminiApiKey = async (): Promise<void> => {
+  geminiClient = null;
+  await localforage.removeItem('gemini_api_key');
+  console.log('Gemini API key cleared, will fall back to default key');
 };
 
 export const checkAPIKeyValidity = async (apiKey: string): Promise<boolean> => {
@@ -62,13 +58,11 @@ export const checkAPIKeyValidity = async (apiKey: string): Promise<boolean> => {
   
   try {
     console.log('Checking API key validity...');
-    const tempClient = new OpenAI({
-      apiKey,
-      dangerouslyAllowBrowser: true
-    });
+    const tempClient = new GoogleGenerativeAI(apiKey);
+    const model = tempClient.getGenerativeModel({ model: "gemini-1.5-flash" });
     
     // Make a minimal API call to check if the key is valid
-    const response = await tempClient.models.list({ limit: 1 });
+    const result = await model.generateContent("Test");
     console.log('API key check successful');
     return true;
   } catch (error) {
@@ -77,8 +71,8 @@ export const checkAPIKeyValidity = async (apiKey: string): Promise<boolean> => {
   }
 };
 
-// Function to process large datasets in chunks for OpenAI analysis
-const processDataInChunks = (data: any[], headers: string[], maxChunkSize: number = 1000): any => {
+// Function to process large datasets in chunks for Gemini analysis
+const processDataInChunks = (data: any[], headers: string[], maxChunkSize: number = 2000): any => {
   console.log(`Processing ${data.length} rows of data in chunks of ${maxChunkSize}`);
   
   // If data is small enough, return as is
@@ -243,20 +237,17 @@ const combineChunkStatistics = (chunkStats: any[], headers: string[]): any => {
         (sum, cs) => sum + (cs[header].mean * cs[header].count), 0
       ) / totalCount;
       
-      // Note: accurate global median, stdDev, and percentiles cannot be calculated
-      // from chunk statistics without the full dataset
       combined[header] = {
         ...combined[header],
         min,
         max,
         mean: weightedMean,
-        // Estimated values (not statistically accurate)
         median: "estimated from chunks",
         stdDev: "estimated from chunks",
         sum: validChunkStats.reduce((sum, cs) => sum + cs[header].sum, 0),
       };
     } else if (columnType === 'text') {
-      // Combine top values across chunks (not perfectly accurate)
+      // Combine top values across chunks
       const valueCounts: Record<string, number> = {};
       
       validChunkStats.forEach(cs => {
@@ -412,23 +403,23 @@ const calculateCorrelation = (pairs: number[][]): number => {
   return denominator === 0 ? 0 : numerator / denominator;
 };
 
-export const analyzeDataWithGPT = async (
+export const analyzeDataWithGemini = async (
   messages: Array<{ role: string; content: string }>,
   csvData: any[],
   headers: string[],
-  model: string = 'gpt-4o-mini'
+  model: string = 'gemini-1.5-flash'
 ): Promise<string | null> => {
   try {
-    console.log(`Analyzing ${csvData.length} rows of data with model: ${model}`);
-    const client = await getOpenAIClient();
+    console.log(`Analyzing ${csvData.length} rows of data with Gemini model: ${model}`);
+    const client = await getGeminiClient();
     
     if (!client) {
-      console.error('OpenAI client not initialized');
-      throw new Error('OpenAI client not initialized. Please provide your API key.');
+      console.error('Gemini client not initialized');
+      throw new Error('Gemini client not initialized. Please provide your API key.');
     }
     
-    // Process large datasets in chunks - increased size for better performance
-    const chunkSize = 5000; // Handle larger datasets more efficiently
+    // Process large datasets in chunks - Gemini handles smaller chunks better
+    const chunkSize = 2000;
     const processedData = processDataInChunks(csvData, headers, chunkSize);
     console.log(`Processed data: ${processedData.processedInChunks ? 'Chunked' : 'Full'} dataset`);
     
@@ -488,10 +479,18 @@ export const analyzeDataWithGPT = async (
       ? JSON.stringify(relationships, null, 2)
       : "No significant relationships identified";
     
-    // Add system message about the data with enhanced formatting instructions
-    const systemMessage = {
-      role: 'system',
-      content: `You are an experienced data analyst specializing in business intelligence for sales and marketing executives. Your task is to help executives understand their data by providing clear, actionable insights with properly formatted outputs.
+    // Build conversation history for Gemini
+    const conversationHistory = messages.map(msg => {
+      if (msg.role === 'user') {
+        return `User: ${msg.content}`;
+      } else if (msg.role === 'assistant') {
+        return `Assistant: ${msg.content}`;
+      }
+      return msg.content;
+    }).join('\n\n');
+    
+    // Create comprehensive prompt for Gemini
+    const prompt = `You are an experienced data analyst specializing in business intelligence for sales and marketing executives. Your task is to help executives understand their data by providing clear, actionable insights with properly formatted outputs.
 
 CRITICAL INSTRUCTION: You MUST analyze and reference ONLY the actual data provided below. DO NOT use illustrative, example, or placeholder numbers. ALL statistics, values, and insights must be derived from the ACTUAL DATA shown below.
 
@@ -528,32 +527,25 @@ OUTPUT FORMATTING REQUIREMENTS:
 7. Suggest specific actionable recommendations
 8. NEVER include disclaimers about "illustrative" or "example" data - always work with the actual data provided
 
-Your goal is to provide a professional, executive-ready analysis based on the ACTUAL DATA that helps decision-makers understand their data and take action. Focus on business implications of the real data rather than just statistics.`
-    };
+Your goal is to provide a professional, executive-ready analysis based on the ACTUAL DATA that helps decision-makers understand their data and take action. Focus on business implications of the real data rather than just statistics.
+
+CONVERSATION HISTORY:
+${conversationHistory}
+
+Please respond to the latest user query while taking into account the full conversation context and the actual data provided above.`;
     
-    // Combine with user messages
-    const allMessages = [systemMessage, ...messages];
+    // Get the Gemini model
+    const geminiModel = client.getGenerativeModel({ model });
     
-    // Handle different model formats
-    let modelName = model;
-    // Clean up model names for API calls
-    if (model === 'gpt-4.1') {
-      modelName = 'gpt-4.1';
-    }
+    console.log(`Using Gemini model: ${model}`);
     
-    console.log(`Using OpenAI model: ${modelName}`);
+    // Generate content with Gemini
+    const result = await geminiModel.generateContent(prompt);
+    const response = await result.response;
     
-    // Call OpenAI API with the specified model
-    const response = await client.chat.completions.create({
-      model: modelName,
-      messages: allMessages as any,
-      temperature: 0.2, // Lower temperature for more factual/analytical responses
-      max_completion_tokens: 2000  // Token limit for response
-    });
-    
-    return response.choices[0]?.message?.content || null;
+    return response.text() || null;
   } catch (error: any) {
-    console.error('Error analyzing data with GPT:', error);
+    console.error('Error analyzing data with Gemini:', error);
     throw error;
   }
 };
@@ -561,7 +553,7 @@ Your goal is to provide a professional, executive-ready analysis based on the AC
 export const isAPIKeyConfigured = async (): Promise<boolean> => {
   try {
     // First check if there's a user-provided key
-    const key = await localforage.getItem<string>('openai_api_key');
+    const key = await localforage.getItem<string>('gemini_api_key');
     
     // Return true if there's either a user key or we have a default key
     return !!key || !!DEFAULT_API_KEY;

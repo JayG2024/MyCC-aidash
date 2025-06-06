@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Key, Check, AlertTriangle, Loader2, Lock, Shield, Sparkles, Copy } from 'lucide-react';
-import { checkAPIKeyValidity, initializeOpenAI, isAPIKeyConfigured } from '../../utils/openai';
+import { checkAPIKeyValidity, initializeGemini, isAPIKeyConfigured } from '../../utils/gemini';
 
 interface APIKeyModalProps {
   onClose: () => void;
@@ -32,7 +32,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
     e.preventDefault();
     
     if (!apiKey.trim() || apiKey === '•••••••••••••••••••••••••••••••••') {
-      setError('Please enter your OpenAI API key');
+      setError('Please enter your Gemini API key');
       return;
     }
     
@@ -44,8 +44,8 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
       const isValid = await checkAPIKeyValidity(apiKey);
       
       if (isValid) {
-        console.log('API key is valid, initializing OpenAI client');
-        await initializeOpenAI(apiKey);
+        console.log('API key is valid, initializing Gemini client');
+        await initializeGemini(apiKey);
         onSuccess();
       } else {
         setError('The API key appears to be invalid. Please check and try again.');
@@ -64,7 +64,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
     
     try {
       // Initialize with no key to use the default key
-      await initializeOpenAI();
+      await initializeGemini();
       onSuccess();
     } catch (error) {
       console.error('Error setting up demo key:', error);
@@ -77,7 +77,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
 
   // Function to handle the copy link
   const handleCopy = () => {
-    navigator.clipboard.writeText('https://platform.openai.com/api-keys');
+    navigator.clipboard.writeText('https://aistudio.google.com/app/apikey');
     // You could add a toast notification here if desired
   };
   
@@ -88,7 +88,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold flex items-center">
               <Key className="mr-2" size={20} />
-              Connect to OpenAI
+              Connect to Gemini AI
             </h3>
             <button 
               onClick={onClose}
@@ -105,7 +105,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
             <div className="flex items-start bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100">
               <Sparkles size={18} className="mr-2 text-blue-600 mt-0.5 flex-shrink-0" />
               <p className="text-sm">
-                Connect your OpenAI API key to enable AI-powered data analysis. The default model is o3-mini, which offers efficient and cost-effective business intelligence.
+                Connect your Google Gemini API key to enable AI-powered data analysis. Gemini 1.5 Flash offers efficient and cost-effective business intelligence.
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
           <form onSubmit={handleSubmit}>
             <div className="mb-5">
               <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1.5">
-                OpenAI API Key
+                Gemini API Key
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -124,7 +124,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
                   type={showPassword ? "text" : "password"}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-..."
+                  placeholder="AI..."
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
                 />
                 <button
@@ -138,7 +138,7 @@ const APIKeyModal: React.FC<APIKeyModalProps> = ({ onClose, onSuccess }) => {
               <div className="mt-2 flex justify-between items-center">
                 <div className="flex items-center">
                   <p className="text-sm text-gray-500">
-                    Need a key? <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Get one from OpenAI</a>
+                    Need a key? <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Get one from Google AI Studio</a>
                   </p>
                   <button 
                     type="button" 

@@ -18,8 +18,9 @@ import AuthWrapper from './components/auth/AuthWrapper';
 
 function App() {
   useEffect(() => {
-    // Initialize emergency monitoring when app starts
-    initializeMonitoring();
+    // Temporarily disable emergency monitoring to prevent fake alerts
+    // TODO: Re-enable when real API is working
+    // initializeMonitoring();
     
     // Cleanup when app unmounts
     return () => {
@@ -33,11 +34,10 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<Analytics />} />
+          <Route path="/" element={<FormMonitoring />} />
           <Route path="/assistants" element={<AIAssistants />} />
           <Route path="/leads" element={<LeadManagement />} />
           <Route path="/reports" element={<Reports />} />
-          <Route path="/analytics" element={<Analytics />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/data-analysis" element={<DataAnalysis />} />
           <Route path="/content-library" element={<AIAssistants />} />
@@ -46,7 +46,7 @@ function App() {
           <Route path="/notification-settings" element={<NotificationSettingsPage />} />
           <Route path="/form-backup" element={<FormBackup />} />
           {/* Catch-all route for 404 */}
-          <Route path="*" element={<Analytics />} />
+          <Route path="*" element={<FormMonitoring />} />
         </Routes>
       </AuthWrapper>
     </Router>

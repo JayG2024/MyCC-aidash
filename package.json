@@ -22,6 +22,7 @@
     "firebase:deploy:functions": "cd functions && npm run build && firebase deploy --only functions"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@types/xlsx": "^0.0.35",
     "axios": "^1.6.2",
     "dotenv": "^16.3.1",
@@ -31,7 +32,6 @@
     "firebase-functions": "^6.3.2",
     "localforage": "^1.10.0",
     "lucide-react": "^0.344.0",
-    "openai": "^4.36.0",
     "papaparse": "^5.4.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

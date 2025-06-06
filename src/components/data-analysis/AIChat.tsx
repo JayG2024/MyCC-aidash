@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, Loader2, X, Maximize2, Minimize2, ChevronDown, ChevronUp, FileText, Key, Check, Settings, Info, Copy, MessageSquare } from 'lucide-react';
-import { analyzeDataWithGPT, isAPIKeyConfigured } from '../../utils/openai';
+import { analyzeDataWithGemini, isAPIKeyConfigured } from '../../utils/gemini';
 import ReactMarkdown from 'react-markdown';
 
 interface AIChatProps {
@@ -26,7 +26,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'I\'m your AI data analyst powered by GPT-4o. Upload your data and ask me anything about it - I can help identify trends, analyze patterns, and provide meaningful insights tailored for executives and sales leaders.'
+      content: 'I\'m your AI data analyst powered by Google Gemini. Upload your data and ask me anything about it - I can help identify trends, analyze patterns, and provide meaningful insights tailored for executives and sales leaders.'
     }
   ]);
   const [input, setInput] = useState('');
@@ -34,7 +34,7 @@ const AIChat: React.FC<AIChatProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [isKeyConfigured, setIsKeyConfigured] = useState(false);
   const [isCheckingKey, setIsCheckingKey] = useState(true);
-  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [largeDataWarning, setLargeDataWarning] = useState(false);
@@ -43,8 +43,8 @@ const AIChat: React.FC<AIChatProps> = ({
 
   // Available models - optimized for large dataset analysis
   const models = [
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast and cost-effective for most business analyses (Recommended)' },
-    { id: 'gpt-4o', name: 'GPT-4o', description: 'Most capable model for complex data analysis and insights' }
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', description: 'Fast and cost-effective for most business analyses (Recommended)' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', description: 'Most capable model for complex data analysis and insights' }
   ];
 
   // Check if API key is configured
@@ -108,8 +108,8 @@ const AIChat: React.FC<AIChatProps> = ({
       if (csvData.length > 200000) {
         setErrorMessage('Warning: This is a very large dataset. Analysis may be slow or may fail due to browser memory limits.');
       }
-      // Call OpenAI API with selected model
-      const response = await analyzeDataWithGPT(userMessages, csvData, headers, selectedModel);
+      // Call Gemini API with selected model
+      const response = await analyzeDataWithGemini(userMessages, csvData, headers, selectedModel);
       if (response) {
         const assistantMessage: ChatMessage = {
           role: 'assistant',
@@ -122,7 +122,7 @@ const AIChat: React.FC<AIChatProps> = ({
       if (error?.message?.includes('network')) {
         msg = 'Network error: Please check your internet connection.';
       } else if (error?.message?.includes('API key')) {
-        msg = 'OpenAI API key error: Please check your API key.';
+        msg = 'Gemini API key error: Please check your API key.';
       } else if (error?.message?.toLowerCase().includes('memory')) {
         msg = 'Memory error: The dataset may be too large for your browser. Try a smaller file.';
       } else if (typeof error?.message === 'string') {

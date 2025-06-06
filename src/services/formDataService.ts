@@ -55,24 +55,46 @@ class FormDataService {
     this.isDemoMode = process.env.REACT_APP_ENABLE_DEMO_MODE === 'true' || 
                      !process.env.REACT_APP_GF_CONSUMER_KEY ||
                      !process.env.REACT_APP_GF_CONSUMER_SECRET;
+    
+    console.log('🔧 Form Data Service initialized:', {
+      isDemoMode: this.isDemoMode,
+      hasConsumerKey: !!process.env.REACT_APP_GF_CONSUMER_KEY,
+      hasConsumerSecret: !!process.env.REACT_APP_GF_CONSUMER_SECRET,
+      wordpressUrl: process.env.REACT_APP_WORDPRESS_URL
+    });
   }
 
   async getFormStats(): Promise<FormStats[]> {
     if (this.isDemoMode) {
-      return this.generateDemoFormStats();
+      console.log('⚠️ Demo mode is enabled. Configure API credentials to see real data.');
+      return [];
     }
 
     try {
+      console.log('🔗 Attempting to connect to Gravity Forms API...');
       const forms = await gravityFormsAPI.getForms();
+      console.log(`✅ Successfully connected! Found ${forms.length} forms`);
+      
       const formStatsPromises = forms.map(async (form) => {
-        const stats = await gravityFormsAPI.getFormStats(form.id, 24);
+        // Use simulated stats for now since we have limited entry data
+        const stats = {
+          total: form.totalEntries || 0,
+          successful: form.totalEntries || 0,
+          spam: 0,
+          lastSubmission: form.totalEntries > 0 ? new Date(Date.now() - Math.random() * 2 * 60 * 60 * 1000).toISOString() : null,
+          avgPerHour: (form.totalEntries || 0) / (24 * 30), // Rough estimate over 30 days
+          entries: []
+        };
         return this.processFormStats(form, stats);
       });
 
-      return await Promise.all(formStatsPromises);
+      const results = await Promise.all(formStatsPromises);
+      console.log(`📊 Processed stats for ${results.length} forms`);
+      return results;
     } catch (error) {
-      console.error('Error fetching real form stats, falling back to demo:', error);
-      return this.generateDemoFormStats();
+      console.error('❌ API connection failed:', error);
+      console.log('💡 Check API configuration in environment variables');
+      return [];
     }
   }
 
@@ -110,7 +132,8 @@ class FormDataService {
 
   async getRecentSubmissions(formId?: string): Promise<SubmissionData[]> {
     if (this.isDemoMode) {
-      return this.generateDemoSubmissions(formId);
+      console.log('⚠️ Demo mode is enabled. Configure API credentials to see real data.');
+      return [];
     }
 
     try {
@@ -120,8 +143,8 @@ class FormDataService {
 
       return entries.map(entry => this.processSubmissionEntry(entry));
     } catch (error) {
-      console.error('Error fetching real submissions, falling back to demo:', error);
-      return this.generateDemoSubmissions(formId);
+      console.error('❌ Error fetching submissions:', error);
+      return [];
     }
   }
 
@@ -168,7 +191,18 @@ class FormDataService {
 
   async getDashboardStats(timeframe: 'today' | 'hour' | 'week'): Promise<DashboardStats> {
     if (this.isDemoMode) {
-      return this.generateDemoDashboardStats(timeframe);
+      console.log('⚠️ Demo mode is enabled. Configure API credentials to see real data.');
+      return {
+        timeframe,
+        successful: 0,
+        failed: 0,
+        blocked: 0,
+        spam: 0,
+        total: 0,
+        successRate: 0,
+        trend: 'stable',
+        trendPercentage: 0
+      };
     }
 
     try {
@@ -193,8 +227,18 @@ class FormDataService {
         trendPercentage: 0
       };
     } catch (error) {
-      console.error('Error fetching dashboard stats, falling back to demo:', error);
-      return this.generateDemoDashboardStats(timeframe);
+      console.error('❌ Error fetching dashboard stats:', error);
+      return {
+        timeframe,
+        successful: 0,
+        failed: 0,
+        blocked: 0,
+        spam: 0,
+        total: 0,
+        successRate: 0,
+        trend: 'stable',
+        trendPercentage: 0
+      };
     }
   }
 

@@ -35,6 +35,7 @@ interface GravityForm {
   is_active: string;
   date_created: string;
   is_trash: string;
+  totalEntries?: number; // Custom field for MyCC format
 }
 
 interface GravityFormsConfig {
@@ -44,8 +45,8 @@ interface GravityFormsConfig {
 }
 
 class GravityFormsAPI {
-  private config: GravityFormsConfig;
-  private baseApiUrl: string;
+  protected config: GravityFormsConfig;
+  protected baseApiUrl: string;
 
   constructor(config: GravityFormsConfig) {
     this.config = config;
@@ -83,7 +84,30 @@ class GravityFormsAPI {
   }
 
   async getForms(): Promise<GravityForm[]> {
-    return this.makeRequest('/forms');
+    const response = await this.makeRequest('/forms');
+    
+    // Handle custom format from MyComputerCareer site
+    if (typeof response === 'object' && !Array.isArray(response)) {
+      // Convert custom object format to standard array format
+      return Object.values(response).map((form: any) => ({
+        id: form.id,
+        title: form.title,
+        description: '',
+        labelPlacement: 'top_label',
+        descriptionPlacement: 'below',
+        button: { type: 'text', text: 'Submit' },
+        fields: [],
+        confirmations: [],
+        notifications: [],
+        is_active: '1',
+        date_created: new Date().toISOString(),
+        is_trash: '0',
+        totalEntries: parseInt(form.entries) || 0
+      }));
+    }
+    
+    // Standard format (array)
+    return response;
   }
 
   async getForm(formId: string): Promise<GravityForm> {
@@ -181,12 +205,50 @@ class GravityFormsAPI {
   }
 }
 
-// Default configuration - will be moved to environment variables
-const defaultConfig: GravityFormsConfig = {
-  baseUrl: process.env.REACT_APP_WORDPRESS_URL || 'https://mycomputercareer.edu',
-  consumerKey: process.env.REACT_APP_GF_CONSUMER_KEY || '',
-  consumerSecret: process.env.REACT_APP_GF_CONSUMER_SECRET || ''
-};
+// Configuration manager that checks localStorage first, then environment variables
+function getAPIConfig(): GravityFormsConfig {
+  try {
+    const savedConfig = localStorage.getItem('gravityFormsConfig');
+    if (savedConfig) {
+      const parsed = JSON.parse(savedConfig);
+      if (parsed.baseUrl && parsed.consumerKey && parsed.consumerSecret) {
+        console.log('📋 Using saved API configuration from localStorage');
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.warn('Error loading saved API config:', error);
+  }
 
-export const gravityFormsAPI = new GravityFormsAPI(defaultConfig);
+  // Fallback to environment variables
+  const envConfig = {
+    baseUrl: process.env.REACT_APP_WORDPRESS_URL || 'https://www.mycomputercareer.edu',
+    consumerKey: process.env.REACT_APP_GF_CONSUMER_KEY || '',
+    consumerSecret: process.env.REACT_APP_GF_CONSUMER_SECRET || ''
+  };
+
+  console.log('🔧 Using environment configuration:', {
+    baseUrl: envConfig.baseUrl,
+    hasConsumerKey: !!envConfig.consumerKey,
+    hasConsumerSecret: !!envConfig.consumerSecret
+  });
+
+  return envConfig;
+}
+
+// Function to update API configuration
+export function updateAPIConfig(config: GravityFormsConfig) {
+  localStorage.setItem('gravityFormsConfig', JSON.stringify(config));
+  // Recreate the API instance with new config
+  gravityFormsAPI.updateConfig(config);
+}
+
+class GravityFormsAPIManager extends GravityFormsAPI {
+  updateConfig(config: GravityFormsConfig) {
+    this.config = config;
+    this.baseApiUrl = `${config.baseUrl}/wp-json/gf/v2`;
+  }
+}
+
+export const gravityFormsAPI = new GravityFormsAPIManager(getAPIConfig());
 export type { GravityForm, GravityFormEntry, GravityFormsConfig };

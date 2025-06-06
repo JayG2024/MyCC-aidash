@@ -85,17 +85,6 @@ const Sidebar: React.FC = () => {
           {/* Links */}
           <nav className="flex-1 pt-4 pb-4 overflow-y-auto">
             <div className="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase">
-              Dashboard
-            </div>
-            <SidebarLink
-              to="/analytics"
-              icon={<BarChart3 size={20} />}
-              label="Analytics Overview"
-              isActive={isActive('/analytics')}
-              onClick={closeMobileMenu}
-            />
-            
-            <div className="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase">
               Data Analysis
             </div>
             <SidebarLink
