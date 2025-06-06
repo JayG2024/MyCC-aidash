@@ -70,15 +70,7 @@ const Sidebar: React.FC = () => {
               className="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg mx-2 transition-colors"
             >
               <Upload size={20} className="mr-3" />
-              <span className="font-medium">Upload Data</span>
-            </button>
-
-            <button
-              onClick={() => scrollToSection('chat-section')}
-              className="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg mx-2 transition-colors"
-            >
-              <MessageSquare size={20} className="mr-3" />
-              <span className="font-medium">Ask Questions</span>
+              <span className="font-medium">Upload & Chat</span>
             </button>
 
             <button
@@ -86,7 +78,7 @@ const Sidebar: React.FC = () => {
               className="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-700 rounded-lg mx-2 transition-colors"
             >
               <BarChart3 size={20} className="mr-3" />
-              <span className="font-medium">View Data</span>
+              <span className="font-medium">View Data Table</span>
             </button>
 
             <div className="px-4 mt-8 mb-4 text-xs font-semibold text-gray-400 uppercase">
@@ -119,7 +111,7 @@ const Sidebar: React.FC = () => {
                   <span className="font-semibold text-blue-900">AI Powered</span>
                 </div>
                 <p className="text-xs text-blue-700">
-                  Upload spreadsheets up to 200MB+ and ask natural language questions to get instant business insights.
+                  Upload massive spreadsheets and start asking questions immediately with side-by-side analysis workflow.
                 </p>
               </div>
             </div>

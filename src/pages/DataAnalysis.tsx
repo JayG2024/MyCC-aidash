@@ -213,95 +213,108 @@ const DataAnalysis: React.FC = () => {
             </div>
           )}
 
-          {/* Main content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Upload and Stats */}
-            <div className="lg:col-span-1 space-y-6">
-              <div id="upload-section">
-                <DataUpload 
-                  onDataParsed={handleDataParsed} 
-                  onBrowseLibrary={() => setIsLibraryOpen(true)}
-                  onSaveToLibrary={handleSaveToLibrary}
-                  hasActiveData={!!csvData && csvData.length > 0}
-                />
-              </div>
-              
-              {csvData && csvData.length > 0 && datasetInfo && (
-                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                    <FileText size={18} className="mr-2 text-blue-600" />
-                    Dataset Overview
-                  </h3>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-blue-50 rounded-lg p-3">
-                      <p className="text-xs text-blue-600 uppercase font-semibold">Records</p>
-                      <p className="text-xl font-bold text-blue-800">{datasetInfo.rows.toLocaleString()}</p>
-                    </div>
+          {/* Main content - Two row layout */}
+          <div className="space-y-6">
+            {/* Top Row - Upload and AI Chat side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Side - Upload and Stats */}
+              <div className="space-y-6">
+                <div id="upload-section">
+                  <DataUpload 
+                    onDataParsed={handleDataParsed} 
+                    onBrowseLibrary={() => setIsLibraryOpen(true)}
+                    onSaveToLibrary={handleSaveToLibrary}
+                    hasActiveData={!!csvData && csvData.length > 0}
+                  />
+                </div>
+                
+                {csvData && csvData.length > 0 && datasetInfo && (
+                  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                      <FileText size={18} className="mr-2 text-blue-600" />
+                      Dataset Overview
+                    </h3>
                     
-                    <div className="bg-indigo-50 rounded-lg p-3">
-                      <p className="text-xs text-indigo-600 uppercase font-semibold">Fields</p>
-                      <p className="text-xl font-bold text-indigo-800">{datasetInfo.columns}</p>
-                    </div>
-                  </div>
-                  
-                  {headers && headers.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">Available Metrics</p>
-                      <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
-                        {headers.map((header, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full"
-                          >
-                            {header}
-                          </span>
-                        ))}
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="bg-blue-50 rounded-lg p-3">
+                        <p className="text-xs text-blue-600 uppercase font-semibold">Records</p>
+                        <p className="text-xl font-bold text-blue-800">{datasetInfo.rows.toLocaleString()}</p>
+                      </div>
+                      
+                      <div className="bg-indigo-50 rounded-lg p-3">
+                        <p className="text-xs text-indigo-600 uppercase font-semibold">Fields</p>
+                        <p className="text-xl font-bold text-indigo-800">{datasetInfo.columns}</p>
                       </div>
                     </div>
-                  )}
-                  
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Info size={14} className="mr-1 text-blue-500" />
-                      {datasetInfo.rows > 10000 ? (
-                        <span>Large dataset will be processed in chunks for optimal performance</span>
-                      ) : (
-                        <span>Dataset size is optimal for AI analysis</span>
-                      )}
+                    
+                    {headers && headers.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Available Metrics</p>
+                        <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto">
+                          {headers.map((header, index) => (
+                            <span
+                              key={index}
+                              className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full"
+                            >
+                              {header}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Info size={14} className="mr-1 text-blue-500" />
+                        {datasetInfo.rows > 10000 ? (
+                          <span>Large dataset will be processed in chunks for optimal performance</span>
+                        ) : (
+                          <span>Dataset size is optimal for AI analysis</span>
+                        )}
+                      </div>
                     </div>
                   </div>
+                )}
+                
+                {/* Quick help box */}
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-5 text-white shadow-sm">
+                  <h3 className="text-lg font-bold mb-3">How to use</h3>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start">
+                      <span className="mr-2">1.</span>
+                      <span>Upload your CSV file or select from library</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2">2.</span>
+                      <span>Connect your Gemini AI key (stored locally)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2">3.</span>
+                      <span>Ask the AI assistant to analyze your data</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="mr-2">4.</span>
+                      <span>Save insights or download formatted reports</span>
+                    </li>
+                  </ul>
                 </div>
-              )}
-              
-              {/* Quick help box */}
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-5 text-white shadow-sm">
-                <h3 className="text-lg font-bold mb-3">How to use</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start">
-                    <span className="mr-2">1.</span>
-                    <span>Upload your CSV file or select from library</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="mr-2">2.</span>
-                    <span>Connect your Gemini AI key (stored locally)</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="mr-2">3.</span>
-                    <span>Ask the AI assistant to analyze your data</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="mr-2">4.</span>
-                    <span>Save insights or download formatted reports</span>
-                  </li>
-                </ul>
+              </div>
+
+              {/* Right Side - AI Chat */}
+              <div id="chat-section" className="h-fit">
+                <AIChat 
+                  csvData={csvData} 
+                  headers={headers} 
+                  isMinimized={false} // Always show expanded in this layout
+                  onToggleMinimize={() => setIsChatMinimized(!isChatMinimized)}
+                  onRequestAPIKey={handleOpenApiKeyModal}
+                />
               </div>
             </div>
-            
-            {/* Right Column - Data Table */}
-            <div className="lg:col-span-2">
-              <div id="table-section">
-                {isLoading ? (
+
+            {/* Bottom Row - Data Table (full width) */}
+            <div id="table-section">
+              {isLoading ? (
                 <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex items-center justify-center">
                   <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mb-4"></div>
@@ -311,34 +324,22 @@ const DataAnalysis: React.FC = () => {
               ) : csvData && csvData.length > 0 && headers && headers.length > 0 ? (
                 <DataTable data={csvData} headers={headers} />
               ) : (
-                <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex items-center justify-center">
+                <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 flex items-center justify-center min-h-[400px]">
                   <div className="text-center">
                     <FileUp size={48} className="mx-auto mb-4 text-gray-300" />
-                    <h3 className="text-lg font-medium text-gray-700 mb-2">No Data Available</h3>
-                    <p className="text-gray-500 mb-6">Upload your CSV files to analyze sales, marketing, and operations data</p>
+                    <h3 className="text-lg font-medium text-gray-700 mb-2">Ready for Data Analysis</h3>
+                    <p className="text-gray-500 mb-6">Upload your spreadsheets above to start analyzing with AI</p>
                     <button 
                       onClick={() => setIsLibraryOpen(true)}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center mx-auto"
                     >
                       <BookOpen size={18} className="mr-2" />
-                      Browse Content Library
+                      Browse Saved Datasets
                     </button>
                   </div>
                 </div>
-                )}
-              </div>
+              )}
             </div>
-          </div>
-          
-          {/* AI Chat Component - Always visible, just minimized/maximized */}
-          <div id="chat-section">
-            <AIChat 
-              csvData={csvData} 
-              headers={headers} 
-              isMinimized={isChatMinimized}
-              onToggleMinimize={() => setIsChatMinimized(!isChatMinimized)}
-              onRequestAPIKey={handleOpenApiKeyModal}
-            />
           </div>
           
           {/* Dataset Library Modal */}
