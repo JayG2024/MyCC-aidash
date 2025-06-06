@@ -40,6 +40,8 @@ const AIChat: React.FC<AIChatProps> = ({
   const [largeDataWarning, setLargeDataWarning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [streamingContent, setStreamingContent] = useState<string>('');
+  const [isStreaming, setIsStreaming] = useState(false);
 
   // Available models - optimized for large dataset analysis
   const models = [
@@ -70,11 +72,27 @@ const AIChat: React.FC<AIChatProps> = ({
   }, [csvData]);
 
   useEffect(() => {
-    scrollToBottom();
+    // Only auto-scroll if we're not streaming or if user is near bottom
+    if (!isStreaming) {
+      scrollToBottom();
+    }
   }, [messages]);
 
+  useEffect(() => {
+    // Smooth scroll while streaming, but keep content in view
+    if (isStreaming && streamingContent) {
+      const chatContainer = messagesEndRef.current?.parentElement?.parentElement;
+      if (chatContainer) {
+        const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 100;
+        if (isNearBottom) {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      }
+    }
+  }, [streamingContent, isStreaming]);
+
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   };
 
   const handleCopyContent = (index: number, content: string) => {
@@ -109,15 +127,49 @@ const AIChat: React.FC<AIChatProps> = ({
       if (csvData.length > 200000) {
         setErrorMessage('Warning: This is a very large dataset. Analysis may be slow or may fail due to browser memory limits.');
       }
+      // Start streaming
+      setIsStreaming(true);
+      setStreamingContent('');
+      
+      // Add placeholder message for streaming
+      const placeholderMessage: ChatMessage = {
+        role: 'assistant',
+        content: ''
+      };
+      setMessages(prevMessages => [...prevMessages, placeholderMessage]);
+      const messageIndex = messages.length + 1; // Account for user message already added
+      
       // Call Gemini API with selected model
       const response = await analyzeDataWithGemini(userMessages, csvData, headers, selectedModel);
+      
       if (response) {
-        const assistantMessage: ChatMessage = {
-          role: 'assistant',
-          content: response
-        };
-        setMessages(prevMessages => [...prevMessages, assistantMessage]);
+        // Simulate streaming by chunking the response
+        const words = response.split(' ');
+        const chunkSize = 3; // Words per chunk
+        let currentContent = '';
+        
+        for (let i = 0; i < words.length; i += chunkSize) {
+          const chunk = words.slice(i, i + chunkSize).join(' ') + ' ';
+          currentContent += chunk;
+          
+          // Update the message content as it streams
+          setMessages(prevMessages => {
+            const newMessages = [...prevMessages];
+            if (newMessages[messageIndex]) {
+              newMessages[messageIndex].content = currentContent.trim();
+            }
+            return newMessages;
+          });
+          
+          setStreamingContent(currentContent);
+          
+          // Add a small delay to simulate streaming
+          await new Promise(resolve => setTimeout(resolve, 30));
+        }
       }
+      
+      setIsStreaming(false);
+      setStreamingContent('');
     } catch (error: any) {
       let msg = 'Sorry, an error occurred while analyzing your data.';
       if (error?.message?.includes('network')) {
@@ -147,15 +199,96 @@ const AIChat: React.FC<AIChatProps> = ({
     setShowModelSelector(!showModelSelector);
   };
 
-  // Define suggested prompts specifically for sales & marketing executives
-  const suggestedPrompts = [
-    "Analyze sales trends over time and identify patterns",
-    "What are our top-selling products/services and why?",
-    "Which customer segments generate the most revenue?",
-    "Identify our best-performing marketing channels",
-    "Show me a breakdown of sales by region with percentages",
-    "What correlations exist between marketing spend and sales?"
-  ];
+  // Generate intelligent suggested prompts based on actual data columns
+  const generateSuggestedPrompts = (headers: string[] | null): string[] => {
+    if (!headers || headers.length === 0) {
+      return [
+        "Analyze trends and patterns in my data",
+        "What are the key insights from this dataset?",
+        "Show me correlations between different metrics",
+        "Identify outliers and anomalies in the data"
+      ];
+    }
+
+    const suggestions: string[] = [];
+    const headerLower = headers.map(h => h.toLowerCase());
+    
+    // Date/time analysis
+    const dateColumns = headerLower.filter(h => 
+      h.includes('date') || h.includes('time') || h.includes('month') || 
+      h.includes('year') || h.includes('day') || h.includes('created')
+    );
+    if (dateColumns.length > 0) {
+      suggestions.push(`Analyze trends over time using the ${headers[headerLower.indexOf(dateColumns[0])]} column`);
+    }
+
+    // Sales/revenue analysis
+    const salesColumns = headerLower.filter(h => 
+      h.includes('sales') || h.includes('revenue') || h.includes('amount') || 
+      h.includes('price') || h.includes('value') || h.includes('total')
+    );
+    if (salesColumns.length > 0) {
+      suggestions.push(`What drives the highest ${headers[headerLower.indexOf(salesColumns[0])]} performance?`);
+    }
+
+    // Product/item analysis
+    const productColumns = headerLower.filter(h => 
+      h.includes('product') || h.includes('item') || h.includes('service') || 
+      h.includes('category') || h.includes('type') || h.includes('name')
+    );
+    if (productColumns.length > 0) {
+      suggestions.push(`Show me the top performing ${headers[headerLower.indexOf(productColumns[0])]} categories`);
+    }
+
+    // Geographic analysis
+    const geoColumns = headerLower.filter(h => 
+      h.includes('region') || h.includes('state') || h.includes('country') || 
+      h.includes('city') || h.includes('location') || h.includes('territory')
+    );
+    if (geoColumns.length > 0) {
+      suggestions.push(`Breakdown performance by ${headers[headerLower.indexOf(geoColumns[0])]} with percentages`);
+    }
+
+    // Customer analysis
+    const customerColumns = headerLower.filter(h => 
+      h.includes('customer') || h.includes('client') || h.includes('user') || 
+      h.includes('segment') || h.includes('demographic')
+    );
+    if (customerColumns.length > 0) {
+      suggestions.push(`Which ${headers[headerLower.indexOf(customerColumns[0])]} segments generate the most value?`);
+    }
+
+    // Marketing/channel analysis
+    const marketingColumns = headerLower.filter(h => 
+      h.includes('channel') || h.includes('source') || h.includes('campaign') || 
+      h.includes('marketing') || h.includes('medium') || h.includes('utm')
+    );
+    if (marketingColumns.length > 0) {
+      suggestions.push(`Analyze the effectiveness of different ${headers[headerLower.indexOf(marketingColumns[0])]} options`);
+    }
+
+    // Correlation analysis
+    const numericColumns = headers.filter((h, i) => {
+      const lowerH = headerLower[i];
+      return lowerH.includes('amount') || lowerH.includes('count') || lowerH.includes('rate') ||
+             lowerH.includes('score') || lowerH.includes('percent') || lowerH.includes('number') ||
+             lowerH.includes('quantity') || lowerH.includes('value') || lowerH.includes('sales') ||
+             lowerH.includes('revenue') || lowerH.includes('cost') || lowerH.includes('price');
+    });
+    if (numericColumns.length >= 2) {
+      suggestions.push(`What correlations exist between ${numericColumns[0]} and ${numericColumns[1]}?`);
+    }
+
+    // Performance analysis
+    if (suggestions.length < 6) {
+      suggestions.push("Identify the key factors driving performance in this dataset");
+      suggestions.push("What patterns and anomalies should I be aware of?");
+    }
+
+    return suggestions.slice(0, 6); // Limit to 6 suggestions
+  };
+
+  const suggestedPrompts = generateSuggestedPrompts(headers);
 
   // Custom renderer for markdown content with better table styling
   const MarkdownRenderer = ({ content }: { content: string }) => {
@@ -303,7 +436,7 @@ const AIChat: React.FC<AIChatProps> = ({
 
       {!isMinimized && (
         <>
-          <div className={`overflow-y-auto p-4 bg-gray-50 ${isExpanded ? 'h-[calc(650px-180px)]' : 'h-[400px]'}`}>
+          <div className={`overflow-y-auto p-4 bg-gray-50 ${isExpanded ? 'h-[calc(650px-180px)]' : 'h-[calc(100vh-350px)] min-h-[600px]'}`}>
             <div className="space-y-4">
               {messages.filter(m => m.role !== 'system').map((message, index) => (
                 <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -343,24 +476,6 @@ const AIChat: React.FC<AIChatProps> = ({
                 </div>
               ))}
               
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="max-w-[90%] rounded-lg px-4 py-3 bg-white border border-gray-200 shadow-sm">
-                    <div className="flex items-center mb-2">
-                      <Bot size={14} className="mr-1 text-blue-600" />
-                      <span className="text-xs font-medium text-blue-600">AI Analyst</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
-                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
-                        <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
-                      </div>
-                      <span className="ml-3 text-sm text-gray-600">Analyzing your business data...</span>
-                    </div>
-                  </div>
-                </div>
-              )}
               
               {/* Add welcome message when no messages */}
               {messages.length === 1 && messages[0].role === 'assistant' && !isLoading && (

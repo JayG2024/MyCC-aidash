@@ -9,11 +9,26 @@ const DEFAULT_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
 
 export const initializeGemini = async (apiKey?: string): Promise<boolean> => {
   try {
-    // Use provided key or try to get from storage, or fall back to default key
-    const key = apiKey || await localforage.getItem<string>('gemini_api_key') || DEFAULT_API_KEY;
+    let key: string | null = null;
+    
+    // Priority order: provided key > user stored key > default key
+    if (apiKey) {
+      key = apiKey;
+      console.log('Using provided API key');
+    } else {
+      // Try to get user stored key
+      const userKey = await localforage.getItem<string>('gemini_api_key');
+      if (userKey) {
+        key = userKey;
+        console.log('Using user-stored API key');
+      } else if (DEFAULT_API_KEY) {
+        key = DEFAULT_API_KEY;
+        console.log('Using default API key');
+      }
+    }
     
     if (!key) {
-      console.log('No Gemini API key found');
+      console.log('No Gemini API key available');
       return false;
     }
     
@@ -22,9 +37,11 @@ export const initializeGemini = async (apiKey?: string): Promise<boolean> => {
     // Save API key for future sessions if provided (and not the default)
     if (apiKey && apiKey !== DEFAULT_API_KEY) {
       await localforage.setItem('gemini_api_key', apiKey);
+      console.log('Saved user API key to storage');
     }
     
-    console.log('Gemini client initialized successfully');
+    console.log('Gemini client initialized successfully with key type:', 
+      key === DEFAULT_API_KEY ? 'default' : 'user-provided');
     return true;
   } catch (error) {
     console.error('Error initializing Gemini:', error);
@@ -52,7 +69,7 @@ export const clearGeminiApiKey = async (): Promise<void> => {
 export const checkAPIKeyValidity = async (apiKey: string): Promise<boolean> => {
   // For the demo key, always return true without making an API call
   if (apiKey === DEFAULT_API_KEY && DEFAULT_API_KEY) {
-    console.log('Using demo API key');
+    console.log('Using default API key - skipping validation');
     return true;
   }
   
@@ -63,10 +80,10 @@ export const checkAPIKeyValidity = async (apiKey: string): Promise<boolean> => {
     
     // Make a minimal API call to check if the key is valid
     const result = await model.generateContent("Test");
-    console.log('API key check successful');
+    console.log('API key validation successful');
     return true;
   } catch (error) {
-    console.error('Invalid API key:', error);
+    console.error('API key validation failed:', error);
     return false;
   }
 };
@@ -552,14 +569,26 @@ Please respond to the latest user query while taking into account the full conve
 
 export const isAPIKeyConfigured = async (): Promise<boolean> => {
   try {
-    // First check if there's a user-provided key
-    const key = await localforage.getItem<string>('gemini_api_key');
+    // Always prioritize having a working API key
+    if (DEFAULT_API_KEY) {
+      console.log('Default Gemini API key is available');
+      // Initialize with default key to ensure it's ready
+      await initializeGemini();
+      return true;
+    }
     
-    // Return true if there's either a user key or we have a default key
-    return !!key || !!DEFAULT_API_KEY;
+    // Check if there's a user-provided key as fallback
+    const userKey = await localforage.getItem<string>('gemini_api_key');
+    if (userKey) {
+      console.log('User-provided Gemini API key found');
+      return true;
+    }
+    
+    console.log('No Gemini API key available');
+    return false;
   } catch (error) {
     console.error('Error checking API key configuration:', error);
-    // Return true if we have a default key, even if there was an error checking storage
+    // Return true if we have a default key, even if there was an error
     return !!DEFAULT_API_KEY;
   }
 };

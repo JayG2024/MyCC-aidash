@@ -275,29 +275,6 @@ const DataAnalysis: React.FC = () => {
                     </div>
                   </div>
                 )}
-                
-                {/* Quick help box */}
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-5 text-white shadow-sm">
-                  <h3 className="text-lg font-bold mb-3">How to use</h3>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <span className="mr-2">1.</span>
-                      <span>Upload your CSV file or select from library</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">2.</span>
-                      <span>Connect your Gemini AI key (stored locally)</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">3.</span>
-                      <span>Ask the AI assistant to analyze your data</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">4.</span>
-                      <span>Save insights or download formatted reports</span>
-                    </li>
-                  </ul>
-                </div>
               </div>
 
               {/* Right Side - AI Chat */}
